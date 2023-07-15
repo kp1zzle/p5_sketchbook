@@ -13,8 +13,6 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 
-/*! p5.js v1.6.0 February 22, 2023 */
-
 /*!!
  *  SVGCanvas v2.0.3
  *  Draw on SVG using Canvas's 2D Context API.
