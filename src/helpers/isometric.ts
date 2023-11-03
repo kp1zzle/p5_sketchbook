@@ -35,3 +35,12 @@ export function IsoShape(s: p5SVG, pts: {x: number, y:number, z: number}[], thet
     }
     s.endShape();
 }
+
+export function IsoLine(s: p5SVG, pts: {x: number, y:number, z: number}[], theta: number) {
+    s.beginShape();
+    for (let i = 0; i < pts.length; i++) {
+        const pt = convertToIsometric(s, pts[i], theta);
+        s.vertex(pt.x, pt.y);
+    }
+    s.endShape();
+}
