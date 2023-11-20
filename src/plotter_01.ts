@@ -29,7 +29,8 @@ const sketch = (s: p5SVG) => {
         function receivedFile(file: p5.File) {
             if (file.type === "image") {
                 img = s.loadImage(file.data, () => {
-                    img.resize((img.width/img.height) * q.lines, q.lines);
+                    img.resize(img.width, q.lines);
+                    console.log(img.height);
                     img.loadPixels();
                 });
             } else {
@@ -58,7 +59,7 @@ const sketch = (s: p5SVG) => {
             const vertSpacing = s.height / q.lines;
             const horizontalSpacing = s.width / img.width;
 
-            for (let i = 0; i < q.lines; i++) {
+            for (let i = 0; i < img.height; i++) {
                 let lineStart: number = null;
                 for (let p = 0; p < img.width; p++) {
                     const index = (p + i * img.width) * 4;
