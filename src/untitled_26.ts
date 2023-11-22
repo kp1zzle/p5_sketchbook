@@ -16,6 +16,7 @@ const q = {
     maxCircleDMult: 0.9,
     xOffset: 0,
     yOffset: 0,
+    filled: false,
 };
 const settings = QuickSettings.create(10, 10, "settings");
 settings.hide();
@@ -24,6 +25,7 @@ settings.bindRange("spacing", 0, 100, q.spacing, 1,  q);
 settings.bindRange("zoom", 1, 100, q.zoom, 1,  q);
 settings.bindRange("minCircleD", 0, 10, q.minCircleD, 0.1,  q);
 settings.bindRange("maxCircleDMult", 0, 1, q.maxCircleDMult, 0.05,  q);
+settings.bindBoolean("filled", q.filled, q);
 
 init(P5);
 const sketch = (s: p5SVG) => {
@@ -45,7 +47,11 @@ const sketch = (s: p5SVG) => {
         }
 
         s.background(255);
-        s.noFill();
+        if (q.filled) {
+            s.fill(0);
+        } else {
+            s.noFill();
+        }
         s.strokeWeight(2);
         s.translate(s.width/2 - (q.numPts * q.spacing / 2) , s.height/2 - (q.numPts/4*5.5 * q.spacing / 2));
 
