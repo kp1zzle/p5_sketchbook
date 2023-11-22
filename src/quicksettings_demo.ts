@@ -4,8 +4,6 @@ import {defaultKeys} from "./helpers/key_pressed";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import QuickSettings from "quicksettings-iterator";
-import {setAspectRatioStr} from "./helpers/aspect_ratio";
-import {IsoLine} from "./helpers/isometric";
 
 // Description: Demo for Quicksettings-iterator, using a modified version of untitled_16.
 // Date: 11/1/23 22:09:35Z
