@@ -1,6 +1,8 @@
 import * as P5 from "p5";
 import {effect, stars, rect} from "./pixel/effects";
 
+// Description: First shader pixel art.
+// Date: 06/18/23 23:24:14Z
 
 const sketch = (s: P5) => {
     const COLUMNS_AND_ROWS = 128;
