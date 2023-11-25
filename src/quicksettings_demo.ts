@@ -81,6 +81,10 @@ const sketch = (s: p5SVG) => {
 
     };
 
+    s.windowResized = () => {
+        s.resizeCanvas(s.windowWidth, s.windowHeight);
+    };
+
     s.keyPressed = () => {
         defaultKeys(s, sketch);
 
