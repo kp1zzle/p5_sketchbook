@@ -1,6 +1,6 @@
 import * as p5 from "p5";
 import QuickSettings from "quicksettings";
-// import "p5.capture";
+// import { P5Capture } from "p5.capture";
 
 // Description: Platform to make pixel art sketches.
 // Date: 11/23/23 22:29:32Z
@@ -9,6 +9,7 @@ const q = {
     bufWidth: 500,
     bufHeight: 500,
     frameRate: 60,
+    kernelSize: 10,
 };
 const settings = QuickSettings.create(10, 10, "settings");
 settings.hide();
@@ -23,6 +24,7 @@ settings.bindRange("bufWidth", 0, 100, q.bufWidth, 1,  q);
 const sketch = (s: p5) => {
     let shader: p5.Shader = null;
     let buf: p5.Graphics = null;
+    let kernel: p5.Graphics = null;
 
 
     s.setup = () => {
@@ -38,6 +40,12 @@ const sketch = (s: p5) => {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         shader = buf.createShader(require("./pixel/shaders/painter.vert"), require("./pixel/shaders/painter.frag"));
 
+        kernel = s.createGraphics(q.kernelSize, q.kernelSize);
+
+    };
+
+    const drawKernel = () => {
+
     };
 
     s.draw = () => {
@@ -45,6 +53,9 @@ const sketch = (s: p5) => {
         s.background(0);
         shader.setUniform("u_resolution", [q.bufWidth, q.bufHeight]);
         shader.setUniform("u_pixelArray", buf);
+        drawKernel();
+        shader.setUniform("u_kernel", buf);
+        shader.setUniform("u_kernelResolution", [q.kernelSize, q.kernelSize]);
         shader.setUniform("u_moveUp", s.keyIsDown(87));
         shader.setUniform("u_moveDown", s.keyIsDown(83));
         shader.setUniform("u_moveLeft", s.keyIsDown(65));
@@ -52,8 +63,6 @@ const sketch = (s: p5) => {
         // buf.clear(0,0,0,0);
         buf.shader(shader);
         buf.rect(0, 0, q.bufWidth, q.bufHeight);
-
-
 
         // Draw in a lower resolution buffer
         s.image(buf, s.width/2 - s.min(s.width, s.height)/2, s.height/2 - s.min(s.width, s.height)/2, s.min(s.width, s.height), s.min(s.width, s.height));
