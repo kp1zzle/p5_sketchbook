@@ -20,19 +20,19 @@ void main() {
     vec2 singlePixel = 1.0 / u_resolution;
     vec2 coord = vTexCoord;
     if (u_moveUp) {
-        coord.y += singlePixel.y;
-    }
-
-    if (u_moveDown) {
         coord.y -= singlePixel.y;
     }
 
+    if (u_moveDown) {
+        coord.y += singlePixel.y;
+    }
+
     if (u_moveLeft) {
-        coord.x += singlePixel.x;
+        coord.x -= singlePixel.x;
     }
 
     if (u_moveRight) {
-        coord.x -= singlePixel.x;
+        coord.x += singlePixel.x;
     }
 
     coord = mod(coord, vec2(1,1));
