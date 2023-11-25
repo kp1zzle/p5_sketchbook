@@ -8,7 +8,7 @@ import {setAspectRatioStr} from "./helpers/aspect_ratio";
 // Date: 11/18/23 23:24:14Z
 
 const q = {
-    lines: 100,
+    lines: 280,
     redWeight: 0.2989,
     greenWeight: 0.5870,
     blueWeight: 0.1140,
@@ -26,7 +26,7 @@ const sketch = (s: p5SVG) => {
 
 
     s.setup = () => {
-        function receivedFile(file: p5.File) {
+        function receivedFile(file: P5.File) {
             if (file.type === "image") {
                 img = s.loadImage(file.data, () => {
                     img.resize(img.width, q.lines);
@@ -39,7 +39,7 @@ const sketch = (s: p5SVG) => {
         }
 
         const canvas = s.createCanvas(s.windowWidth, s.windowHeight);
-        settings.addText("Aspect Ratio", "11x14", (aspect: string) => {
+        settings.addText("Aspect Ratio", "4x5.5", (aspect: string) => {
             setAspectRatioStr(s, aspect);
         });
 
@@ -61,7 +61,7 @@ const sketch = (s: p5SVG) => {
 
             for (let i = 0; i < img.height; i++) {
                 let lineStart: number = null;
-                for (let p = 0; p < img.width; p++) {
+                for (let p = img.width-1; p >= 0; p--) {
                     const index = (p + i * img.width) * 4;
                     const v = (img.pixels[index] / 255 * q.redWeight + img.pixels[index + 1] / 255 * q.greenWeight + img.pixels[index + 2] / 255 * q.blueWeight);
 
@@ -70,7 +70,7 @@ const sketch = (s: p5SVG) => {
                             lineStart = p;
                         }
 
-                        if (p === img.width - 1 && lineStart !== null) {
+                        if (p === 0 && lineStart !== null) {
                             const y = i * vertSpacing;
                             s.line(lineStart * horizontalSpacing, y, (p - 1) * horizontalSpacing, y);
                         }
