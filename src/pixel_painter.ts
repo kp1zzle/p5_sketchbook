@@ -1,6 +1,9 @@
 import * as p5 from "p5";
 import QuickSettings from "quicksettings";
 // import { P5Capture } from "p5.capture";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {VideoRecorder} from "./helpers/p5.videorecorder";
 
 // Description: Platform to make pixel art sketches.
 // Date: 11/23/23 22:29:32Z
@@ -25,6 +28,7 @@ const sketch = (s: p5) => {
     let shader: p5.Shader = null;
     let buf: p5.Graphics = null;
     let kernel: p5.Graphics = null;
+    let videoRecorder: any = null;
 
 
     s.setup = () => {
@@ -41,6 +45,24 @@ const sketch = (s: p5) => {
         shader = buf.createShader(require("./pixel/shaders/painter.vert"), require("./pixel/shaders/painter.frag"));
 
         kernel = s.createGraphics(q.kernelSize, q.kernelSize);
+
+        videoRecorder = new VideoRecorder(s, undefined, "mp4");
+        videoRecorder.onFileReady = () => {
+            videoRecorder.save(document.title + "_" + (new Date).toISOString());
+        };
+
+        settings.addButton("start recording", () => {
+            videoRecorder.start();
+            settings.hideControl("start recording");
+            settings.showControl("stop recording");
+        });
+
+        settings.addButton("stop recording", () => {
+            videoRecorder.stop();
+            settings.hideControl("stop recording");
+            settings.showControl("start recording");
+        });
+        settings.hideControl("stop recording");
 
     };
 
@@ -66,7 +88,6 @@ const sketch = (s: p5) => {
 
         // Draw in a lower resolution buffer
         s.image(buf, s.width/2 - s.min(s.width, s.height)/2, s.height/2 - s.min(s.width, s.height)/2, s.min(s.width, s.height), s.min(s.width, s.height));
-        console.log(s.frameRate());
     };
 
     s.mouseClicked = () => {
