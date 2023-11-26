@@ -3,7 +3,6 @@ import QuickSettings from "quicksettings";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {VideoRecorder} from "./helpers/p5.videorecorder";
-import {invert} from "three/examples/jsm/nodes/shadernode/ShaderNodeBaseElements";
 
 // Description: Platform to make pixel art sketches.
 // Date: 11/23/23 22:29:32Z
