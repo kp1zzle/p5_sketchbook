@@ -11,6 +11,7 @@ uniform bool u_moveUp;
 uniform bool u_moveDown;
 uniform bool u_moveLeft;
 uniform bool u_moveRight;
+uniform bool u_invert;
 
 
 varying vec2 vTexCoord;
@@ -41,6 +42,10 @@ void main() {
 
     if (vTexCoord.x > 0.48 && vTexCoord.x < 0.52 && vTexCoord.y > 0.48 && vTexCoord.y < 0.52) {
         gl_FragColor = vec4(0, 0, 0, 1);
+    }
+
+    if (u_invert) {
+        gl_FragColor = vec4(1.0 - gl_FragColor.r,1.0 -gl_FragColor.g,1.0 -gl_FragColor.b,1);
     }
 
 
