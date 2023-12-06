@@ -18,6 +18,7 @@ const settings = QuickSettings.create(10, 10, "settings");
 settings.hide();
 settings.bindRange("bufWidth", 0, 100, q.bufWidth, 1,  q);
 settings.bindRange("frameMultiplier", 1, 3, q.frameMultiplier, 1,  q);
+settings.bindRange("kernelSize", 1, 100, q.kernelSize, 1,  q);
 settings.addButton("invert", () => {
     q.invert = true;
 });
@@ -66,7 +67,9 @@ const sketch = (s: p5) => {
     };
 
     const drawKernel = () => {
-
+        kernel.noStroke();
+        kernel.fill(40, 3, 252);
+        kernel.rect(0, 0, q.kernelSize, q.kernelSize);
     };
 
     s.draw = () => {
@@ -75,7 +78,7 @@ const sketch = (s: p5) => {
             shader.setUniform("u_resolution", [q.bufWidth, q.bufHeight]);
             shader.setUniform("u_pixelArray", buf);
             drawKernel();
-            shader.setUniform("u_kernel", buf);
+            shader.setUniform("u_kernel", kernel);
             shader.setUniform("u_kernelResolution", [q.kernelSize, q.kernelSize]);
             shader.setUniform("u_moveUp", s.keyIsDown(87));
             shader.setUniform("u_moveDown", s.keyIsDown(83));
