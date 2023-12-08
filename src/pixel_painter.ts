@@ -12,16 +12,24 @@ const q = {
     bufHeight: 500,
     kernelSize: 10,
     frameMultiplier: 1,
-    invert: false
+    invert: false,
+    penDown: false,
+    kernelMode: "solid",
+    kernelColor: [40, 3, 252],
+    kernelParam: 2,
 };
 const settings = QuickSettings.create(10, 10, "settings");
 settings.hide();
 settings.bindRange("bufWidth", 0, 100, q.bufWidth, 1,  q);
 settings.bindRange("frameMultiplier", 1, 3, q.frameMultiplier, 1,  q);
-settings.bindRange("kernelSize", 1, 100, q.kernelSize, 1,  q);
 settings.addButton("invert", () => {
     q.invert = true;
 });
+settings.addButton("toggle pen up/down", () => {
+    q.penDown = !q.penDown;
+});
+settings.bindRange("kernelParam", 1, 100, q.kernelParam, 1,  q);
+
 
 
 const sketch = (s: p5) => {
@@ -29,9 +37,24 @@ const sketch = (s: p5) => {
     let buf: p5.Graphics = null;
     let kernel: p5.Graphics = null;
     let videoRecorder: any = null;
-
+    let commandIdx = 0;
+    let commands: string[][][] = [];
+    let up = false;
+    let down = false;
+    let left = false;
+    let right = false;
 
     s.setup = () => {
+
+        settings.addRange("kernelSize", 1, 100, q.kernelSize, 1,  (num) => {
+            q.kernelSize = num;
+            drawKernel();
+        });
+
+        settings.addDropDown("kernel mode", ["solid", "dots", "grid"], (selection) => {
+            q.kernelMode = selection.value;
+            drawKernel();
+        });
 
         s.createCanvas(s.windowWidth, s.windowHeight);
         s.noSmooth();
@@ -39,12 +62,11 @@ const sketch = (s: p5) => {
         buf.rectMode(s.CENTER);
         buf.noStroke();
         buf.background(255);
-        buf.fill(0);
-        buf.rect(0, 0, 10);
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         shader = buf.createShader(require("./pixel/shaders/painter.vert"), require("./pixel/shaders/painter.frag"));
 
         kernel = s.createGraphics(q.kernelSize, q.kernelSize);
+        drawKernel();
 
         videoRecorder = new VideoRecorder(s, undefined, "mp4");
         videoRecorder.onFileReady = () => {
@@ -64,30 +86,50 @@ const sketch = (s: p5) => {
         });
         settings.hideControl("stop recording");
         s.frameRate(60);
+
+        settings.addTextArea("commands", "", (input) => {
+            commands = parseCommands(input);
+        });
     };
 
     const drawKernel = () => {
-        kernel.noStroke();
-        kernel.fill(40, 3, 252);
-        kernel.rect(0, 0, q.kernelSize, q.kernelSize);
+        kernel = s.createGraphics(q.kernelSize, q.kernelSize);
+        const color = s.color(q.kernelColor);
+        kernel.fill(color);
+        kernel.stroke(color);
+        switch (q.kernelMode) {
+        case "solid":
+            solid();
+            break;
+        case "dots":
+            dots(q.kernelParam);
+            break;
+        case "grid":
+
+        }
     };
 
     s.draw = () => {
         s.background(0);
+        if (commands.length > 0) {
+            applyCurrCommand();
+        }
         for (let i = 0; i < q.frameMultiplier; i++) {
             shader.setUniform("u_resolution", [q.bufWidth, q.bufHeight]);
             shader.setUniform("u_pixelArray", buf);
-            drawKernel();
             shader.setUniform("u_kernel", kernel);
             shader.setUniform("u_kernelResolution", [q.kernelSize, q.kernelSize]);
-            shader.setUniform("u_moveUp", s.keyIsDown(87));
-            shader.setUniform("u_moveDown", s.keyIsDown(83));
-            shader.setUniform("u_moveLeft", s.keyIsDown(65));
-            shader.setUniform("u_moveRight", s.keyIsDown(68));
+            shader.setUniform("u_moveUp", s.keyIsDown(87) || up);
+            shader.setUniform("u_moveDown", s.keyIsDown(83) || down);
+            shader.setUniform("u_moveLeft", s.keyIsDown(65) || left);
+            shader.setUniform("u_moveRight", s.keyIsDown(68) || right);
             shader.setUniform("u_invert", q.invert);
-            if (q.invert) {
-                q.invert = false;
-            }
+            shader.setUniform("u_penDown", q.penDown);
+            q.invert = false;
+            up = false;
+            down = false;
+            left = false;
+            right = false;
             // buf.clear(0,0,0,0);
             buf.shader(shader);
             buf.rect(0, 0, q.bufWidth, q.bufHeight);
@@ -96,6 +138,11 @@ const sketch = (s: p5) => {
 
         // Draw in a lower resolution buffer
         s.image(buf, s.width/2 - s.min(s.width, s.height)/2, s.height/2 - s.min(s.width, s.height)/2, s.min(s.width, s.height), s.min(s.width, s.height));
+
+        if (!q.penDown) {
+            const kernelDrawSize = s.min(s.width, s.height)/q.bufWidth * q.kernelSize;
+            s.image(kernel, s.width/2 - kernelDrawSize/2, s.height/2 - kernelDrawSize/2, kernelDrawSize, kernelDrawSize);
+        }
     };
 
     s.mouseClicked = () => {
@@ -119,6 +166,67 @@ const sketch = (s: p5) => {
         if (s.key == "q") {
             q.frameMultiplier--;
         }
+    };
+
+    // MARK -- Text command parsing
+
+    const parseCommands = (input: string) => {
+        const lines = input.split(/\r?\n/);
+        const out: string[][][] = [];
+        for (const line of lines) {
+            const commands = line.split(" ");
+            const parsedCommands: string[][] = [];
+            for (const command of commands) {
+                parsedCommands.push(command.split("="));
+            }
+            let mult = parseInt(commands[0]);
+            if (isNaN(mult)) {
+                mult = 1;
+            }
+
+            for (let z = 0; z < mult; z++) {
+                out.push(parsedCommands);
+            }
+        }
+        return out;
+    };
+
+    const applyCurrCommand = () => {
+        for (const command of commands[commandIdx]) {
+            console.log(command);
+            switch (command[0]) {
+            case "up":
+                up = true;
+                break;
+            case "down":
+                down = true;
+                break;
+            case "left":
+                left = true;
+                break;
+            case "right":
+                right = true;
+                break;
+            }
+        }
+        commandIdx = (commandIdx + 1) % commands.length;
+    };
+
+    // MARK -- Kernels
+    const solid = () => {
+        kernel.noStroke();
+        kernel.fill(40, 3, 252);
+        kernel.rect(0, 0, q.kernelSize, q.kernelSize);
+    };
+
+    const dots = (size: number) => {
+        kernel.noStroke();
+        for (let x = 0; x < q.kernelSize; x += 2 * size) {
+            for (let y = 0; y < q.kernelSize; y += 2 * size) {
+                kernel.rect(x, y, size);
+            }
+        }
+
     };
 
 };
