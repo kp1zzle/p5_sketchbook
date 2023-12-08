@@ -6,7 +6,6 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform sampler2D u_pixelArray;
-uniform float u_time;
 uniform bool u_moveUp;
 uniform bool u_moveDown;
 uniform bool u_moveLeft;
@@ -15,7 +14,7 @@ uniform bool u_invert;
 uniform vec2 u_kernelResolution;
 uniform sampler2D u_kernel;
 uniform bool u_penDown;
-
+uniform float u_frameMultiplier;
 
 varying vec2 vTexCoord;
 
@@ -24,7 +23,7 @@ vec4 lerpBlend(vec4 top, vec4 back) {
 }
 
 void main() {
-    vec2 singlePixel = 1.0 / u_resolution;
+    vec2 singlePixel = u_frameMultiplier / u_resolution;
     vec2 coord = vTexCoord;
     if (u_moveUp) {
         coord.y -= singlePixel.y;

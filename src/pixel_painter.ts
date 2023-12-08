@@ -21,7 +21,7 @@ const q = {
 const settings = QuickSettings.create(10, 10, "settings");
 settings.hide();
 settings.bindRange("bufWidth", 0, 100, q.bufWidth, 1,  q);
-settings.bindRange("frameMultiplier", 1, 3, q.frameMultiplier, 1,  q);
+settings.bindRange("frameMultiplier", 1, 10, q.frameMultiplier, 1,  q);
 settings.addButton("invert", () => {
     q.invert = true;
 });
@@ -43,6 +43,7 @@ const sketch = (s: p5) => {
     let down = false;
     let left = false;
     let right = false;
+    const kernelModes = ["solid", "dots"];
 
     s.setup = () => {
 
@@ -51,7 +52,7 @@ const sketch = (s: p5) => {
             drawKernel();
         });
 
-        settings.addDropDown("kernel mode", ["solid", "dots", "grid"], (selection) => {
+        settings.addDropDown("kernel mode", kernelModes, (selection) => {
             q.kernelMode = selection.value;
             drawKernel();
         });
@@ -87,9 +88,22 @@ const sketch = (s: p5) => {
         settings.hideControl("stop recording");
         s.frameRate(60);
 
-        settings.addTextArea("commands", "", (input) => {
-            commands = parseCommands(input);
+        settings.addTextArea("commands", "");
+
+        settings.addButton("execute commands", () => {
+            commands = parseCommands(settings.getValue("commands"));
+            settings.disableControl("commands");
+            settings.hideControl("execute commands");
+            settings.showControl("stop command execution");
         });
+
+        settings.addButton("stop command execution", () => {
+            commands = [];
+            settings.enableControl("commands");
+            settings.hideControl("stop command execution");
+            settings.showControl("execute commands");
+        });
+        settings.hideControl("stop command execution");
     };
 
     const drawKernel = () => {
@@ -114,26 +128,26 @@ const sketch = (s: p5) => {
         if (commands.length > 0) {
             applyCurrCommand();
         }
-        for (let i = 0; i < q.frameMultiplier; i++) {
-            shader.setUniform("u_resolution", [q.bufWidth, q.bufHeight]);
-            shader.setUniform("u_pixelArray", buf);
-            shader.setUniform("u_kernel", kernel);
-            shader.setUniform("u_kernelResolution", [q.kernelSize, q.kernelSize]);
-            shader.setUniform("u_moveUp", s.keyIsDown(87) || up);
-            shader.setUniform("u_moveDown", s.keyIsDown(83) || down);
-            shader.setUniform("u_moveLeft", s.keyIsDown(65) || left);
-            shader.setUniform("u_moveRight", s.keyIsDown(68) || right);
-            shader.setUniform("u_invert", q.invert);
-            shader.setUniform("u_penDown", q.penDown);
-            q.invert = false;
-            up = false;
-            down = false;
-            left = false;
-            right = false;
-            // buf.clear(0,0,0,0);
-            buf.shader(shader);
-            buf.rect(0, 0, q.bufWidth, q.bufHeight);
-        }
+
+        shader.setUniform("u_resolution", [q.bufWidth, q.bufHeight]);
+        shader.setUniform("u_pixelArray", buf);
+        shader.setUniform("u_kernel", kernel);
+        shader.setUniform("u_kernelResolution", [q.kernelSize, q.kernelSize]);
+        shader.setUniform("u_moveUp", s.keyIsDown(87) || up);
+        shader.setUniform("u_moveDown", s.keyIsDown(83) || down);
+        shader.setUniform("u_moveLeft", s.keyIsDown(65) || left);
+        shader.setUniform("u_moveRight", s.keyIsDown(68) || right);
+        shader.setUniform("u_invert", q.invert);
+        shader.setUniform("u_penDown", q.penDown);
+        shader.setUniform("u_frameMultiplier", q.frameMultiplier);
+        q.invert = false;
+        up = false;
+        down = false;
+        left = false;
+        right = false;
+        // buf.clear(0,0,0,0);
+        buf.shader(shader);
+        buf.rect(0, 0, q.bufWidth, q.bufHeight);
 
 
         // Draw in a lower resolution buffer
@@ -170,18 +184,33 @@ const sketch = (s: p5) => {
 
     // MARK -- Text command parsing
 
-    const parseCommands = (input: string) => {
-        const lines = input.split(/\r?\n/);
+    const parseCommandsInner = (lines: string[]) => {
         const out: string[][][] = [];
-        for (const line of lines) {
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
             const commands = line.split(" ");
-            const parsedCommands: string[][] = [];
-            for (const command of commands) {
-                parsedCommands.push(command.split("="));
-            }
             let mult = parseInt(commands[0]);
             if (isNaN(mult)) {
                 mult = 1;
+            }
+
+            if (!isNaN(mult) && commands.length === 2 && commands[1] === "(") {
+                console.log("here")
+                // Parse block
+                const indexOfClose = lines.lastIndexOf(")");
+                console.log(lines.slice(i+1, indexOfClose))
+                const parsedBlock = parseCommandsInner(lines.slice(i+1, indexOfClose));
+
+                for (let z = 0; z < mult; z++) {
+                    out.push(...parsedBlock);
+                }
+                i = indexOfClose;
+                continue;
+            }
+
+            const parsedCommands: string[][] = [];
+            for (const command of commands) {
+                parsedCommands.push(command.split("="));
             }
 
             for (let z = 0; z < mult; z++) {
@@ -189,11 +218,17 @@ const sketch = (s: p5) => {
             }
         }
         return out;
+    }
+
+    const parseCommands = (input: string) => {
+        const lines = input.split(/\r?\n/);
+        console.log(lines)
+        return parseCommandsInner(lines);
     };
 
     const applyCurrCommand = () => {
+        let kernelDidChange = false;
         for (const command of commands[commandIdx]) {
-            console.log(command);
             switch (command[0]) {
             case "up":
                 up = true;
@@ -207,15 +242,45 @@ const sketch = (s: p5) => {
             case "right":
                 right = true;
                 break;
+            case "invert":
+                q.invert = true;
+                break;
+            case "togglePen":
+                q.penDown = !q.penDown;
+                break;
+            case "penUp":
+                q.penDown = false;
+                break;
+            case "penDown":
+                q.penDown = true;
+                break;
+            case "kernelSize":
+                q.kernelSize = parseInt(command[1]);
+                kernelDidChange = true;
+                break;
+            case "kernelParam":
+                q.kernelSize = parseInt(command[1]);
+                kernelDidChange = true;
+                break;
+            case "kernelMode":
+                q.kernelMode = command[1];
+                kernelDidChange = true;
+                break;
+            case "kernelColor":
+                const rgb = command[1].split(',')
+                q.kernelColor = [parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2])];
+                kernelDidChange = true;
+                break;
             }
         }
+        if (kernelDidChange)
+            drawKernel();
         commandIdx = (commandIdx + 1) % commands.length;
     };
 
     // MARK -- Kernels
     const solid = () => {
         kernel.noStroke();
-        kernel.fill(40, 3, 252);
         kernel.rect(0, 0, q.kernelSize, q.kernelSize);
     };
 
