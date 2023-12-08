@@ -46,11 +46,9 @@ Wrap a block in parens prepended with an integer N to repeat the block N times. 
 
 ```
 3 (
-
 up
-
 down
-
 left
-
-)```
+)
+invert
+```
