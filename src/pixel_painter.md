@@ -44,7 +44,8 @@ Prepend a command line with an integer N to repeat that N command.
 #### Block repetition
 Wrap a block in parens prepended with an integer N to repeat the block N times. Note that the parens MUST have their own lines.
 
-`3 (
+```
+3 (
 
 up
 
@@ -52,4 +53,4 @@ down
 
 left
 
-)`
+)```
