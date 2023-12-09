@@ -4,7 +4,7 @@ import QuickSettings from "quicksettings";
 // @ts-ignore
 import {VideoRecorder} from "./p5.videorecorder";
 
-export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
+export function initSketch(quicksettingsEnabled = true, inputCommands = "", penStartsDown = true, manualModeEnabledAtStart = true) {
     return (s: p5) => {
         let shader: p5.Shader = null;
         let buf: p5.Graphics = null;
@@ -23,10 +23,11 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
             kernelSize: 10,
             frameMultiplier: 1,
             invert: false,
-            penDown: false,
+            penDown: penStartsDown,
             kernelMode: "solid",
             kernelColor: [40, 3, 252],
             kernelParam: 2,
+            manualModeEnabled: manualModeEnabledAtStart,
         };
         let settings: any;
 
@@ -112,6 +113,8 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
                 settings.showControl("execute commands");
             });
             settings.hideControl("stop command execution");
+
+            settings.bindBoolean("manual mode", q.manualModeEnabled, q);
         };
 
         const drawKernel = () => {
@@ -141,10 +144,10 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
             shader.setUniform("u_pixelArray", buf);
             shader.setUniform("u_kernel", kernel);
             shader.setUniform("u_kernelResolution", [q.kernelSize, q.kernelSize]);
-            shader.setUniform("u_moveUp", s.keyIsDown(87) || up);
-            shader.setUniform("u_moveDown", s.keyIsDown(83) || down);
-            shader.setUniform("u_moveLeft", s.keyIsDown(65) || left);
-            shader.setUniform("u_moveRight", s.keyIsDown(68) || right);
+            shader.setUniform("u_moveUp",  manualModeAndKeyDown(87) || up);
+            shader.setUniform("u_moveDown", manualModeAndKeyDown(83) || down);
+            shader.setUniform("u_moveLeft", manualModeAndKeyDown(65) || left);
+            shader.setUniform("u_moveRight", manualModeAndKeyDown(68) || right);
             shader.setUniform("u_invert", q.invert);
             shader.setUniform("u_penDown", q.penDown);
             shader.setUniform("u_frameMultiplier", q.frameMultiplier);
@@ -183,13 +186,46 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
                 settings.toggleVisibility();
             }
 
-            if (s.key == "e") {
-                q.frameMultiplier++;
+            if (q.manualModeEnabled) {
+                if (s.key == "e") {
+                    q.frameMultiplier++;
+                }
+                if (s.key == "q") {
+                    q.frameMultiplier--;
+                }
+                if (s.key == " ") {
+                    q.kernelMode = s.random(kernelModes);
+                    drawKernel();
+                }
+                if (s.key == "r") {
+                    q.invert = true;
+                }
+                if (s.key == "f") {
+                    q.penDown = !q.penDown;
+                }
+                if (s.key == "=") {
+                    q.kernelParam--;
+                    drawKernel();
+                }
+                if (s.key == "-") {
+                    q.kernelParam++;
+                    drawKernel();
+                }
+                if (s.key == "0") {
+                    q.kernelColor = [0, 0, 0];
+                    drawKernel();
+                }
+                if (s.key == "9") {
+                    q.kernelColor = [40, 3, 252];
+                    drawKernel();
+                }
             }
-            if (s.key == "q") {
-                q.frameMultiplier--;
-            }
+
         };
+
+        function manualModeAndKeyDown(code: number): boolean {
+            return q.manualModeEnabled &&s .keyIsDown(code);
+        }
 
         // MARK -- Text command parsing
 
