@@ -16,7 +16,7 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
         let down = false;
         let left = false;
         let right = false;
-        const kernelModes = ["solid", "dots"];
+        const kernelModes = ["solid", "dots", "triangle"];
         const q = {
             bufWidth: 500,
             bufHeight: 500,
@@ -31,7 +31,7 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
         let settings: any;
 
         s.setup = () => {
-            s.createCanvas(s.windowWidth, s.windowHeight);
+            s.createCanvas(s.min(s.windowWidth, s.windowHeight), s.min(s.windowWidth, s.windowHeight));
             s.noSmooth();
             buf = s.createGraphics(q.bufWidth, q.bufHeight, s.WEBGL);
             buf.rectMode(s.CENTER);
@@ -62,7 +62,7 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
         const initQuicksettings = () => {
             settings = QuickSettings.create(10, 10, "settings");
             settings.hide();
-            settings.bindRange("bufWidth", 0, 100, q.bufWidth, 1,  q);
+            settings.bindRange("bufWidth", 0, 1000, q.bufWidth, 1,  q);
             settings.bindRange("frameMultiplier", 1, 10, q.frameMultiplier, 1,  q);
             settings.addRange("kernelSize", 1, 100, q.kernelSize, 1, (num: number) => {
                 q.kernelSize = num;
@@ -79,7 +79,10 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
             settings.addButton("toggle pen up/down", () => {
                 q.penDown = !q.penDown;
             });
-            settings.bindRange("kernelParam", 1, 100, q.kernelParam, 1,  q);
+            settings.addRange("kernelParam", 1, 100, q.kernelParam, 1,  (num: number) => {
+                q.kernelParam = num;
+                drawKernel();
+            });
             settings.addButton("start recording", () => {
                 videoRecorder.start();
                 settings.hideControl("start recording");
@@ -123,8 +126,9 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
             case "dots":
                 dots(q.kernelParam);
                 break;
-            case "grid":
-
+            case "triangle":
+                triangle(q.kernelParam);
+                break;
             }
         };
 
@@ -133,7 +137,6 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
             if (commands.length > 0) {
                 applyCurrCommand();
             }
-
             shader.setUniform("u_resolution", [q.bufWidth, q.bufHeight]);
             shader.setUniform("u_pixelArray", buf);
             shader.setUniform("u_kernel", kernel);
@@ -156,7 +159,7 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
 
 
             // Draw in a lower resolution buffer
-            s.image(buf, s.width / 2 - s.min(s.width, s.height) / 2, s.height / 2 - s.min(s.width, s.height) / 2, s.min(s.width, s.height), s.min(s.width, s.height));
+            s.image(buf, 0, 0, s.width, s.height);
 
             if (!q.penDown) {
                 const kernelDrawSize = s.min(s.width, s.height) / q.bufWidth * q.kernelSize;
@@ -171,7 +174,8 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
         };
 
         s.windowResized = () => {
-            s.resizeCanvas(s.windowWidth, s.windowHeight);
+            s.resizeCanvas(s.min(s.windowWidth, s.windowHeight), s.min(s.windowWidth, s.windowHeight));
+
         };
 
         s.keyPressed = () => {
@@ -296,7 +300,15 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
                     kernel.rect(x, y, size);
                 }
             }
+        };
 
+        const triangle = (corner: number) => {
+            kernel.noStroke();
+            const corners = [[0, 0], [q.kernelSize, 0], [q.kernelSize, q.kernelSize], [0, q.kernelSize]];
+            const pt1 = corners[corner % 4];
+            const pt2 = corners[(corner + 1) % 4];
+            const pt3 = corners[(corner + 2) % 4];
+            kernel.triangle(pt1[0], pt1[1], pt2[0], pt2[1], pt3[0], pt3[1]);
         };
     };
 }
