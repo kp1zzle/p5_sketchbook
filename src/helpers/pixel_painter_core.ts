@@ -53,8 +53,10 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
 
             s.frameRate(60);
 
-            if (inputCommands !== "")
+            if (inputCommands !== "") {
                 commands = parseCommands(inputCommands);
+                console.log(commands);
+            }
         };
 
         const initQuicksettings = () => {
@@ -253,6 +255,9 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "") {
                     break;
                 case "penDown":
                     q.penDown = true;
+                    break;
+                case "frameMultiplier":
+                    q.frameMultiplier = parseInt(command[1]);
                     break;
                 case "kernelSize":
                     q.kernelSize = parseInt(command[1]);

@@ -11,12 +11,18 @@ const q = {
 const settings = QuickSettings.create(10, 10, "settings");
 settings.hide();
 settings.bindNumber("param", 0, 1000, q.param, 1, q);
+const commands = `5 (
+frameMultiplier=2
+penDown
+50 right up
+50 left up
+50 left down
+50 right down
+invert penUp
+frameMultiplier=5
+20 down
+)
+20 left
+`;
 
-
-new p5(initSketch( false,
-    `
-    penDown
-    50 up
-   `
-
-), document.body);
+new p5(initSketch( false, commands), document.body);
