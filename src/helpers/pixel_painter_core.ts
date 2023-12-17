@@ -219,6 +219,22 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "", penS
                     q.kernelColor = [40, 3, 252];
                     drawKernel();
                 }
+                if (s.key == "8") {
+                    q.kernelColor = [224, 6, 245];
+                    drawKernel();
+                }
+                if (s.key == "7") {
+                    q.kernelColor = [200, 245, 66];
+                    drawKernel();
+                }
+                if (s.key == "6") {
+                    q.kernelColor = [227, 7, 7];
+                    drawKernel();
+                }
+                if (s.key == "5") {
+                    q.kernelColor = [79, 196, 100];
+                    drawKernel();
+                }
             }
 
         };
