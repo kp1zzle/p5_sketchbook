@@ -4,7 +4,7 @@ import QuickSettings from "quicksettings";
 // @ts-ignore
 import {VideoRecorder} from "./p5.videorecorder";
 
-export function initSketch(quicksettingsEnabled = true, inputCommands = "", penStartsDown = true, manualModeEnabledAtStart = true) {
+export function initSketch(quicksettingsEnabled = true, inputCommands = "", penStartsDown = true, manualModeEnabledAtStart = true, background = [255, 255, 255]) {
     return (s: p5) => {
         let shader: p5.Shader = null;
         let buf: p5.Graphics = null;
@@ -37,7 +37,7 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "", penS
             buf = s.createGraphics(q.bufWidth, q.bufHeight, s.WEBGL);
             buf.rectMode(s.CENTER);
             buf.noStroke();
-            buf.background(255);
+            buf.background(background);
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             shader = buf.createShader(require("../pixel/shaders/painter.vert"), require("../pixel/shaders/painter.frag"));
 
@@ -136,7 +136,7 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "", penS
         };
 
         s.draw = () => {
-            s.background(0);
+            s.background(background);
             if (commands.length > 0) {
                 applyCurrCommand();
             }
