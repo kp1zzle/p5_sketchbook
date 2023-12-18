@@ -1,6 +1,4 @@
 precision highp float;
-#include "../../helpers/lygia/generative/snoise.glsl"
-#include "../../helpers/lygia/generative/worley.glsl"
 
 #define MAX_EFFECTS 10
 

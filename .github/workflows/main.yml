@@ -17,6 +17,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Checkout submodules
+        uses: textbook/git-checkout-submodule-action@master
+
       - name: Install
         run: npm ci
 
