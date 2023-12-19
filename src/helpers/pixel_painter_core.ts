@@ -4,7 +4,7 @@ import QuickSettings from "quicksettings";
 // @ts-ignore
 import {VideoRecorder} from "./p5.videorecorder";
 
-export function initSketch(quicksettingsEnabled = true, inputCommands = "", penStartsDown = true, manualModeEnabledAtStart = true, background = [255, 255, 255]) {
+export function initSketch(quicksettingsEnabled = true, inputCommands: string[] = [], penStartsDown = true, manualModeEnabledAtStart = true, background = [255, 255, 255]) {
     return (s: p5) => {
         let shader: p5.Shader = null;
         let buf: p5.Graphics = null;
@@ -54,9 +54,8 @@ export function initSketch(quicksettingsEnabled = true, inputCommands = "", penS
 
             s.frameRate(60);
 
-            if (inputCommands !== "") {
-                commands = parseCommands(inputCommands);
-                console.log(commands);
+            if (inputCommands.length > 0) {
+                commands = parseCommandsInner(inputCommands);
             }
         };
 
