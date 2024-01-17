@@ -12,3 +12,5 @@ export class Point implements point {
         this.y = y;
     }
 }
+
+export type vector = point
