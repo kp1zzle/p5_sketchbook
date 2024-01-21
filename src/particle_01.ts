@@ -34,11 +34,11 @@ const sketch = (s: p5SVG) => {
         s.background(0);
         system.update();
         system.draw(s);
-        system.addParticle(s.width/2, s.height - 100);
+        system.addParticle(s.width/2, s.height - 100, s.random());
     };
 
     s.mouseClicked = () => {
-        system.addParticle(s.mouseX, s.mouseY);
+        system.addParticle(s.mouseX, s.mouseY, s.random());
     };
 
     s.keyPressed = () => {
@@ -54,10 +54,12 @@ const sketch = (s: p5SVG) => {
 class Particle {
     velocity: P5.Vector;
     pos: P5.Vector;
+    opacity: number;
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, opacity: number) {
         this.pos = new P5.Vector(x, y);
         this.velocity = P5.Vector.random2D().normalize();
+        this.opacity = opacity;
     }
 
     run = (bodies: Body[]) => {
@@ -78,7 +80,7 @@ class Particle {
         // s.fill(255);
         s.noFill();
         s.stroke(255);
-        s.ellipse(this.pos.x, this.pos.y, 6, 6);
+        s.ellipse(this.pos.x, this.pos.y,10 *  this.opacity + 6, 10 * this.opacity + 6);
     };
 
 }
@@ -114,8 +116,8 @@ class ParticleSystem {
         }
     };
 
-    addParticle = (x: number, y: number) => {
-        this.particles.push(new Particle(x, y));
+    addParticle = (x: number, y: number, opacity: number) => {
+        this.particles.push(new Particle(x, y, opacity));
     };
 
     addBody = (x: number, y: number, mass: number) => {
