@@ -11,21 +11,38 @@ const q = {
     baseWidth: 10,
     dropOff: 0.1,
     spacing: 5,
+    sinMult:20,
 };
 const settings = QuickSettings.create(10, 10, "settings");
 settings.hide();
 settings.bindRange("baseWidth", 0, 100, q.baseWidth, 1,  q);
 settings.bindRange("dropOff", 0, 0.15, q.dropOff, 0.001,  q);
 settings.bindRange("spacing", 0, 50, q.spacing, 1,  q);
+settings.bindRange("sinMult", 0, 100, q.sinMult, 1,  q);
 
 init(P5);
 const sketch = (s: p5SVG) => {
+    let pg: P5.Graphics;
+    let img: P5.Image = null;
+
     s.setup = () => {
-        s.createCanvas(s.windowWidth, s.windowHeight);
+        function receivedFile(file: p5.File) {
+            if (file.type === "image") {
+                img = s.loadImage(file.data, () => {
+                    img.resize(100, 100);
+                    img.loadPixels();
+                });
+            } else {
+                console.log("Not an image file!");
+            }
+        }
+        const c = s.createCanvas(s.windowWidth, s.windowHeight);
         settings.addText("Aspect Ratio", "11x14", (aspect: string) => {
             setAspectRatioStr(s, aspect);
         });
         s.angleMode(s.DEGREES);
+        pg = s.createGraphics(100, 100);
+        c.drop(receivedFile);
     };
 
     s.draw = () => {
@@ -45,9 +62,9 @@ const sketch = (s: p5SVG) => {
             return s.max(s.abs(width * (1-q.dropOff)), 1);
         }
         function sineSizeFn (x: number, width: number): number {
-            return q.baseWidth + ((q.baseWidth/2)*s.sin(x*20));
+            return q.baseWidth + ((q.baseWidth/2)*s.sin(x*q.sinMult));
         }
-        function repeatedEl (x: number, y: number, width: number, height: number, spacing: number, sizeFn: (x: number, width: number) => number, corner?: number) {
+        function repeatedEl (x: number, y: number, width: number, height: number, spacing: number, graphic: P5.Graphics, sizeFn: (x: number, width: number) => number, corner?: number) {
             let elementHeight = q.baseWidth;
             const yMult = height > 0 ? 1 : -1;
             let vCount = 0;
@@ -56,7 +73,7 @@ const sketch = (s: p5SVG) => {
                 const xMult = width > 0 ? 1 : -1;
                 let hCount = 0;
                 for (let i = 0; s.abs(i) < s.abs(width);) {
-                    triangleElement(x + i, y + j, elementWidth, elementHeight, corner);
+                    s.image(graphic, x + i, y + j, elementWidth, elementHeight);
                     i += (elementWidth + q.spacing) * xMult;
                     elementWidth = sizeFn(hCount, elementWidth);
                     hCount++;
@@ -68,9 +85,15 @@ const sketch = (s: p5SVG) => {
         }
 
         s.background(255);
-        s.fill(0);
-        s.strokeWeight(0);
-        repeatedEl(50, 50, 225, 550,  5, sineSizeFn, 3);
+        pg.fill(0);
+        pg.strokeWeight(0);
+        if (img === null) {
+            pg.square(0, 0, 100);
+        } else {
+            pg.image(img, 0, 0, 100, 100);
+        }
+
+        repeatedEl(50, 50, 800, 1000,  5, pg,sineSizeFn, 3);
     };
 
     s.mouseClicked = () => {
