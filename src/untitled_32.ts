@@ -3,6 +3,7 @@ import * as P5 from "p5";
 import {defaultKeys} from "./helpers/key_pressed";
 import QuickSettings from "quicksettings";
 import {setAspectRatioStr} from "./helpers/aspect_ratio";
+import {defaultPaneHelpers, initPaneAtLeft} from "./helpers/tweakpane";
 
 // Description: Using untitled_31 to make a trippy pattern.
 // Date: 2/01/24 21:31:35Z
@@ -19,6 +20,15 @@ settings.bindRange("baseWidth", 0, 100, q.baseWidth, 1,  q);
 settings.bindRange("dropOff", 0, 0.15, q.dropOff, 0.001,  q);
 settings.bindRange("spacing", 0, 50, q.spacing, 1,  q);
 settings.bindRange("sinMult", 0, 100, q.sinMult, 1,  q);
+
+
+const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "untitled_32"});
+pane.addBinding(q, "baseWidth", {min: 0, max: 100, step: 1});
+pane.addBinding(q, "dropOff", {min: 0, max: 0.15, step: 0.001});
+pane.addBinding(q, "spacing", {min: 0});
+pane.addBinding(q, "sinMult");
+
+
 
 init(P5);
 const sketch = (s: p5SVG) => {
@@ -40,6 +50,7 @@ const sketch = (s: p5SVG) => {
         settings.addText("Aspect Ratio", "11x14", (aspect: string) => {
             setAspectRatioStr(s, aspect);
         });
+        defaultPaneHelpers(pane, s, sketch);
         s.angleMode(s.DEGREES);
         pg = s.createGraphics(100, 100);
         c.drop(receivedFile);
