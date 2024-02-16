@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@flatten-js/core": "^1.4.1",
+    "@tweakpane/plugin-essentials": "^0.2.1",
     "@types/quicksettings": "^3.0.1",
     "p5": "^1.6.0",
     "p5.capture": "^1.4.1",

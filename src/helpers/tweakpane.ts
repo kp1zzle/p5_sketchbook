@@ -6,6 +6,8 @@ import {P5} from "p5.js-svg/dist/types";
 import {exportPNG, exportSVG} from "./export";
 import {p5SVG} from "p5.js-svg";
 import {setAspectRatioStr} from "./aspect_ratio";
+import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
+import {RadioGridApi} from "@tweakpane/plugin-essentials";
 
 export function initPaneAtLeft(scale?: number, config?: PaneConfig) {
     if (scale === undefined) {
@@ -29,9 +31,7 @@ export function initPaneAtLeft(scale?: number, config?: PaneConfig) {
     // document.body.appendChild(paneContainer);
 
     const pane = new Pane(config);
-
-
-
+    pane.registerPlugin(EssentialsPlugin);
 
     return {pane, uiWidth};
 }
@@ -77,20 +77,22 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
     pane.controller.rackController.rack.children;
     // if pane.controller.
     const f = pane.addFolder({title: "Misc"});
+    const aspectRatios = ["1x1", "11x14", "2x3", "16x9"];
+    const v = f.addBlade({
+        view: "radiogrid",
+        groupName: "aspect ratio",
+        label: "aspect ratio",
+        size: [2, 2],
+        cells: (x: number, y: number) => ({
+            title: aspectRatios[y * 2 + x],
+            value: aspectRatios[y * 2 + x],
+        }),
+        value: "1x1",
+    }) as RadioGridApi<string>;
+    v.on("change", () => {
+        console.log(v.value);
+        setAspectRatioStr(s, v.value.rawValue);
+    });
     f.addButton({title: "Export PNG"}).on("click", () => {exportPNG(s);});
     f.addButton({title: "Export SVG"}).on("click", () => {exportSVG(s, sketch);});
-    const v = f.addBlade({
-        view: "list",
-        label: "aspect ratio",
-        options: [
-            {text: "square", value: "1x1"},
-            {text: "11x17", value: "11x17"},
-            {text: "2x3", value: "2x3"},
-            {text: "9x16", value: "9x16"},
-        ],
-        value: "LDG",
-    }) as ListBladeApi<string>;
-    v.on("change", () => {
-        setAspectRatioStr(s, v.value);
-    } );
 }
