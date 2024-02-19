@@ -89,6 +89,8 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
         background: "#999999",
         direction: "vertical",
         aspect: "1x1",
+        zoom: 1,
+        translation: {x: 0, y: 0}
     };
 
     f.addBinding(PARAMS, "background", {
@@ -96,6 +98,21 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
         color: {},
     }).on("change", () => {
         setBackground(s.color(PARAMS.background));
+    });
+
+    f.addBinding(PARAMS, "zoom", {
+        max: 2,
+        min: 0,
+    }).on("change", () => {
+        const canvas = document.getElementById("defaultCanvas0");
+        canvas.style.transform = "scale("+PARAMS.zoom.toString()+")";
+        canvas.style.zIndex = "-1";
+    });
+
+    f.addBinding(PARAMS, "translation").on("change", () => {
+        const canvas = document.getElementById("defaultCanvas0");
+        canvas.style.zIndex = "-1";
+        canvas.style.translate = (3*PARAMS.translation.x).toString() + "px " + (3*PARAMS.translation.y).toString() + "px";
     });
 
     const updateAspect = () => {
