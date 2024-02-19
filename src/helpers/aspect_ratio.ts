@@ -1,11 +1,18 @@
 import {p5SVG} from "p5.js-svg";
 
-export function setAspectRatio(s: p5SVG, w: number, h: number) {
-    const unit = s.min(s.windowWidth / w, s.windowHeight / h);
+export function setAspectRatio(s: p5SVG, w: number, h: number, maxW?: number, maxH?: number) {
+    if (maxW === undefined) {
+        maxW = s.windowWidth;
+    }
+    if (maxH === undefined) {
+        maxH = s.windowHeight;
+    }
+
+    const unit = s.min(maxW / w, maxH / h);
     s.resizeCanvas(unit * w, unit * h);
 }
 
-export function setAspectRatioStr(s: p5SVG, aspect: string) {
+export function setAspectRatioStr(s: p5SVG, aspect: string, maxW?: number, maxH?: number) {
     let dims = aspect.split(":");
     if (dims.length !== 2) {
         dims = aspect.split("x");
@@ -23,5 +30,24 @@ export function setAspectRatioStr(s: p5SVG, aspect: string) {
         return;
     }
 
-    setAspectRatio(s, w, h);
+    setAspectRatio(s, w, h, maxW, maxH);
+}
+
+export function maxHeight(min?: number) {
+    if (min === undefined) {
+        min = 800;
+    }
+
+    return Math.max(min, 0.9*window.innerHeight);
+}
+
+export function maxWidth(min?: number, uiWidth?: number) {
+    if (min === undefined) {
+        min = 800;
+    }
+    if (uiWidth === undefined) {
+        uiWidth = 0;
+    }
+
+    return Math.max(min, 0.9*(window.innerWidth - (2*uiWidth)));
 }

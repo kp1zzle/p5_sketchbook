@@ -1,13 +1,14 @@
 // A collection of helpers for tweakpane
 
 import {PaneConfig} from "tweakpane/dist/types/pane/pane-config";
-import {ListBladeApi, Pane} from "tweakpane";
+import {Pane} from "tweakpane";
 import {P5} from "p5.js-svg/dist/types";
 import {exportPNG, exportSVG} from "./export";
 import {p5SVG} from "p5.js-svg";
-import {setAspectRatioStr} from "./aspect_ratio";
+import {maxHeight, maxWidth, setAspectRatioStr} from "./aspect_ratio";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import {RadioGridApi} from "@tweakpane/plugin-essentials";
+import {setBackground} from "./color";
 
 export function initPaneAtLeft(scale?: number, config?: PaneConfig) {
     if (scale === undefined) {
@@ -32,6 +33,7 @@ export function initPaneAtLeft(scale?: number, config?: PaneConfig) {
 
     const pane = new Pane(config);
     pane.registerPlugin(EssentialsPlugin);
+
 
     return {pane, uiWidth};
 }
@@ -64,7 +66,7 @@ function setJetBlackTheme() {
     document.body.appendChild(theme);
 }
 
-export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void) {
+export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void, maxW?: number, maxH?: number) {
     // Hacky way to determine if we've already run this function
     for (const f of pane.controller.rackController.rack.children) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -74,11 +76,51 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
         }
     }
 
-    pane.controller.rackController.rack.children;
-    // if pane.controller.
+    if (maxW === undefined) {
+        maxW = maxWidth();
+    }
+    if (maxH === undefined) {
+        maxH = maxHeight();
+    }
+
     const f = pane.addFolder({title: "Misc"});
-    const aspectRatios = ["1x1", "11x14", "2x3", "16x9"];
-    const v = f.addBlade({
+
+    const PARAMS = {
+        background: "#999999",
+        direction: "vertical",
+        aspect: "1x1",
+    };
+
+    f.addBinding(PARAMS, "background", {
+        view: "color",
+        color: {},
+    }).on("change", () => {
+        setBackground(s.color(PARAMS.background));
+    });
+
+    const updateAspect = () => {
+        let aspect = PARAMS.aspect;
+        if (PARAMS.direction === "horizontal") {
+            const dims = aspect.split("x");
+            aspect = dims[1] + "x" + dims[0];
+        }
+        setAspectRatioStr(s, aspect, maxW, maxH);
+    };
+
+    const directionOpts = ["vertical", "horizontal"];
+    f.addBinding(PARAMS, "direction", {
+        view: "radiogrid",
+        groupName: "pageDirection",
+        label: "",
+        size: [2, 1],
+        cells: (x: number, y: number) => ({
+            title: directionOpts[y + x],
+            value: directionOpts[y + x],
+        }),
+    }).on("change", updateAspect);
+
+    const aspectRatios = ["1x1", "11x14", "2x3", "9x16"];
+    f.addBinding(PARAMS, "aspect",{
         view: "radiogrid",
         groupName: "aspect ratio",
         label: "aspect ratio",
@@ -87,12 +129,9 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
             title: aspectRatios[y * 2 + x],
             value: aspectRatios[y * 2 + x],
         }),
-        value: "1x1",
-    }) as RadioGridApi<string>;
-    v.on("change", () => {
-        console.log(v.value);
-        setAspectRatioStr(s, v.value.rawValue);
-    });
+    }).on("change", updateAspect);
+
+    // Export
     f.addButton({title: "Export PNG"}).on("click", () => {exportPNG(s);});
     f.addButton({title: "Export SVG"}).on("click", () => {exportSVG(s, sketch);});
 }

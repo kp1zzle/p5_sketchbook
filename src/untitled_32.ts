@@ -2,8 +2,9 @@ import init, {p5SVG} from "p5.js-svg";
 import * as P5 from "p5";
 import {defaultKeys} from "./helpers/key_pressed";
 import QuickSettings from "quicksettings";
-import {setAspectRatioStr} from "./helpers/aspect_ratio";
+import {maxHeight, maxWidth, setAspectRatioStr} from "./helpers/aspect_ratio";
 import {defaultPaneHelpers, initPaneAtLeft} from "./helpers/tweakpane";
+import {setBackground} from "./helpers/color";
 
 // Description: Using untitled_31 to make a trippy pattern.
 // Date: 2/01/24 21:31:35Z
@@ -47,13 +48,12 @@ const sketch = (s: p5SVG) => {
             }
         }
         const c = s.createCanvas(s.windowWidth, s.windowHeight);
-        settings.addText("Aspect Ratio", "11x14", (aspect: string) => {
-            setAspectRatioStr(s, aspect);
-        });
-        defaultPaneHelpers(pane, s, sketch);
+        defaultPaneHelpers(pane, s, sketch, maxWidth(800, uiWidth));
         s.angleMode(s.DEGREES);
         pg = s.createGraphics(100, 100);
         c.drop(receivedFile);
+        setBackground(s.color("#999999"));
+        setAspectRatioStr(s, "1x1", maxWidth(800, uiWidth), maxHeight());
     };
 
     s.draw = () => {
@@ -95,7 +95,7 @@ const sketch = (s: p5SVG) => {
             pg.image(img, 0, 0, 100, 100);
         }
 
-        repeatedEl(50, 50, 1200, 1500,  5, pg,sineSizeFn, 3);
+        repeatedEl(2.5, 2.5, 1200, 1500,  5, pg,sineSizeFn, 3);
     };
 
     s.mouseClicked = () => {
