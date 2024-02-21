@@ -4,38 +4,50 @@ import {defaultKeys} from "./helpers/key_pressed";
 import {maxHeight, maxWidth, setAspectRatioStr} from "./helpers/aspect_ratio";
 import {defaultPaneHelpers, initPaneAtLeft} from "./helpers/tweakpane";
 import {setBackground} from "./helpers/color";
+import {initDrawingSystem} from "./helpers/drawing";
 
 // Description: Drawing system.
 // Date: 2/20/24 00:21:14Z
 
 const q = {
-    param: 3,
 };
-const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "control panel"});
-pane.addBinding(q, "param", {min: 0, max: 100, step: 1});
+const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "untitled_34"});
+
+let img: P5.Graphics = null;
+let updateFunc: () => void;
+let drawFunc: () => void;
 
 init(P5);
 const sketch = (s: p5SVG) => {
-    let img: P5.Graphics = null;
-
     s.setup = () => {
         s.createCanvas(s.windowWidth, s.windowHeight);
-        defaultPaneHelpers(pane, s, sketch, maxWidth(800, uiWidth));
         setBackground(s.color("#999999"));
         setAspectRatioStr(s, "1x1", maxWidth(800, uiWidth), maxHeight());
-        img = s.createGraphics(s.width, s.height);
+        if (img === null) {
+            const o = initDrawingSystem(s, pane, s.width, s.height);
+            img = o.img;
+            updateFunc = o.updateFunc;
+        }
+        defaultPaneHelpers(pane, s, sketch, maxWidth(800, uiWidth));
     };
 
     s.draw = () => {
         s.background(255);
+        if (img.width !== s.width || img.height !== s.height) {
+            img.resizeCanvas(s.width, s.height, true);
+            drawFunc();
+        }
+
         s.image(img, 0, 0);
 
-        if (s.mouseIsPressed) {
-            img.line(s.mouseX, s.mouseY, s.pmouseX, s.pmouseY);
-        }
+        updateFunc();
+
     };
 
-    s.mouseClicked = () => {
+    s.mousePressed = () => {
+    };
+
+    s.mouseReleased = () => {
     };
 
     s.mouseDragged = () => {
