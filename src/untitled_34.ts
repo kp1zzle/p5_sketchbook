@@ -27,6 +27,7 @@ const sketch = (s: p5SVG) => {
             const o = initDrawingSystem(s, pane, s.width, s.height);
             img = o.img;
             updateFunc = o.updateFunc;
+            drawFunc = o.drawFunc;
         }
         defaultPaneHelpers(pane, s, sketch, maxWidth(800, uiWidth));
     };

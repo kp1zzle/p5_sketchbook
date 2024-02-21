@@ -1,7 +1,6 @@
 import {p5SVG} from "p5.js-svg";
-import {initPaneAtLeft} from "./tweakpane";
 import {Pane} from "tweakpane";
-import {Point, point} from "./point";
+import {point} from "./point";
 
 interface path {
     strokeWeight: number
