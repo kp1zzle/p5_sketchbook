@@ -7,7 +7,6 @@ import {exportPNG, exportSVG} from "./export";
 import {p5SVG} from "p5.js-svg";
 import {maxHeight, maxWidth, setAspectRatioStr} from "./aspect_ratio";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
-import {RadioGridApi} from "@tweakpane/plugin-essentials";
 import {setBackground} from "./color";
 
 export function initPaneAtLeft(scale?: number, config?: PaneConfig) {
