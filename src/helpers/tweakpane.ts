@@ -1,4 +1,5 @@
 // A collection of helpers for tweakpane
+// Tweakpane docs: https://tweakpane.github.io/docs/
 
 import {PaneConfig} from "tweakpane/dist/types/pane/pane-config";
 import {Pane} from "tweakpane";
