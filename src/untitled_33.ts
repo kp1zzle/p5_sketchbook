@@ -27,7 +27,7 @@ const sketch = (s: P5) => {
         setAspectRatioStr(s, "1x1", maxWidth(800, uiWidth), maxHeight());
         defaultPaneHelpers(pane, s, sketch, maxWidth(800, uiWidth));
 
-        s.noSmooth();
+        // s.noSmooth();
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         shader = s.createShader(require("./pixel/shaders/relief.vert"), require("./pixel/shaders/relief.frag"));
 
