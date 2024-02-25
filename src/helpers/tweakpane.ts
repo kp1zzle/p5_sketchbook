@@ -15,6 +15,7 @@ import {setBackground} from "./color";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {VideoRecorder} from "./p5.videorecorder";
+import {BladeState} from "@tweakpane/core";
 
 
 export function initPaneAtLeft(scale?: number, config?: PaneConfig) {
@@ -158,7 +159,7 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
     }).on("change", updateAspect);
 
     const ff = f.addFolder({title: "JSON", expanded: false});
-    ff.addButton({title: "Export Settings"}).on("click", () => {s.saveJSON(pane.exportState(), document.title + "_" + (new Date).toISOString());});
+    ff.addButton({title: "Export Settings"}).on("click", () => {s.saveJSON(stateExport(pane), document.title + "_" + (new Date).toISOString());});
     ff.addBinding(PARAMS, "file", {
         label: "Import Settings",
         view: "file-input",
@@ -189,6 +190,31 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
             recordingButton.title = "Stop Recording...";
         }
     });
+}
 
+function stateExport(pane: Pane): BladeState {
+    const bannedTerms = ["Import Settings"];
+    const out = pane.exportState();
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    out["children"] = scanChildrenForDisallowedLabelsAndTitles(out["children"], bannedTerms);
+    return out;
 
+}
+
+function scanChildrenForDisallowedLabelsAndTitles(children: NonNullable<unknown>[], disallowedTitlesOrLabels: string[]): NonNullable<unknown>[] {
+    const out: NonNullable<unknown>[] = [];
+    for (const child of children) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        if ((!("title" in child) || !disallowedTitlesOrLabels.includes(child["title"])) && (!("label" in child) || !disallowedTitlesOrLabels.includes(child["label"]))) {
+            if ("children" in child) {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                child.children = scanChildrenForDisallowedLabelsAndTitles(child.children, disallowedTitlesOrLabels);
+            }
+            out.push(child);
+        }
+    }
+    return out;
 }
