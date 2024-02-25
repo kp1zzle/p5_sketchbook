@@ -146,12 +146,12 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
         }),
     }).on("change", updateAspect);
 
-    const aspectRatios = ["1x1", "11x14", "2x3", "9x16", "11x17", "17x22"];
+    const aspectRatios = ["1x1", "11x14", "2x3", "9x16", "11x17", "17x22", "16x22", "3x4", "13x19"];
     f.addBinding(PARAMS, "aspect",{
         view: "radiogrid",
         groupName: "aspect ratio",
         label: "aspect ratio",
-        size: [3, 2],
+        size: [3, 3],
         cells: (x: number, y: number) => ({
             title: aspectRatios[y * 3 + x],
             value: aspectRatios[y * 3 + x],
