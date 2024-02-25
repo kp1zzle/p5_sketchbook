@@ -9,11 +9,13 @@ import {defaultPaneHelpers, initPaneAtLeft} from "./helpers/tweakpane";
 
 const q = {
     zoom: 1,
+    speed: 1,
     color1: {r: 0, g: 148, b: 212},
     color2: {r: 224, g: 153, b: 153}
 };
 const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "untitled_34"});
 pane.addBinding(q, "zoom");
+pane.addBinding(q, "speed");
 pane.addBinding(q, "color1", {expanded: true, picker: "inline",});
 pane.addBinding(q, "color2", {expanded: true, picker: "inline",});
 
@@ -35,14 +37,12 @@ const sketch = (s: P5) => {
 
     s.draw = () => {
         s.noStroke();
-        t+=0.01;
-
+        t+=0.01*q.speed;
 
         shader.setUniform("u_zoom", q.zoom);
         shader.setUniform("u_time", t);
         shader.setUniform("u_color1", [q.color1.r, q.color1.g, q.color1.b]);
         shader.setUniform("u_color2", [q.color2.r, q.color2.g, q.color2.b]);
-
 
         s.shader(shader);
         s.rect(0-s.width/2, 0-s.height/2, s.width, s.height);

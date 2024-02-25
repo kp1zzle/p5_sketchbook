@@ -8,6 +8,9 @@ import {exportPNG, exportSVG} from "./export";
 import {p5SVG} from "p5.js-svg";
 import {maxHeight, maxWidth, setAspectRatioStr} from "./aspect_ratio";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import * as TweakpaneFileImportPlugin from "tweakpane-plugin-file-import";
 import {setBackground} from "./color";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -37,6 +40,7 @@ export function initPaneAtLeft(scale?: number, config?: PaneConfig) {
 
     const pane = new Pane(config);
     pane.registerPlugin(EssentialsPlugin);
+    pane.registerPlugin(TweakpaneFileImportPlugin);
 
 
     return {pane, uiWidth};
@@ -94,7 +98,8 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
         direction: "vertical",
         aspect: "1x1",
         zoom: 1,
-        translation: {x: 0, y: 0}
+        translation: {x: 0, y: 0},
+        file: "",
     };
 
     f.addBinding(PARAMS, "background", {
@@ -152,6 +157,21 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
         }),
     }).on("change", updateAspect);
 
+    const ff = f.addFolder({title: "JSON", expanded: false});
+    ff.addButton({title: "Export Settings"}).on("click", () => {s.saveJSON(pane.exportState(), document.title + "_" + (new Date).toISOString());});
+    ff.addBinding(PARAMS, "file", {
+        label: "Import Settings",
+        view: "file-input",
+        lineCount: 3,
+        filetypes: [".json"],
+    }).on("change", (ev) => {
+        // pane.importState(JSON.parse(PARAMS.file));\
+        const val = ev.value as unknown as File;
+        val.text().then((s: string) => {
+            pane.importState(JSON.parse(s));
+        });
+    });
+
     // Export
     f.addButton({title: "Export PNG"}).on("click", () => {exportPNG(s);});
     f.addButton({title: "Export SVG"}).on("click", () => {exportSVG(s, sketch);});
@@ -169,5 +189,6 @@ export function defaultPaneHelpers(pane: Pane, s: P5, sketch: (s: p5SVG) => void
             recordingButton.title = "Stop Recording...";
         }
     });
+
 
 }
