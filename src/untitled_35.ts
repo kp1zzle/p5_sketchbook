@@ -16,13 +16,18 @@ const q = {
     zoom: 25,
     color1: "#0773ff",
     color2: "#e236ff",
-    minCircleD: 1,
-    maxCircleDMult: 0.5,
-    background: "#000000",
-    xOffset: 0,
-    yOffset: 0,
+    minCircleDMult: 0.1,
+    maxCircleDMult: 0.95,
+    offset: {x: 0, y: 0},
 };
-const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "untitled_34"});
+const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "Circles"});
+pane.addBinding(q, "zoom");
+pane.addBinding(q, "numPts");
+pane.addBinding(q, "minCircleDMult");
+pane.addBinding(q, "maxCircleDMult", {step: 0.05});
+pane.addBinding(q, "offset");
+pane.addBinding(q, "color1", {expanded: true, picker: "inline",});
+pane.addBinding(q, "color2", {expanded: true, picker: "inline",});
 
 let img: P5.Graphics = null;
 let updateFunc: () => void;
@@ -41,6 +46,7 @@ const sketch = (s: p5SVG) => {
             drawFunc = o.drawFunc;
         }
         defaultPaneHelpers(pane, s, sketch, maxWidth(800, uiWidth));
+        s.frameRate(1);
     };
 
     s.draw = () => {
@@ -50,27 +56,26 @@ const sketch = (s: p5SVG) => {
             drawFunc();
         }
         function determineCircleD(x: number, y: number, second: boolean): number {
-            const v = s.noise((q.xOffset + x)/q.zoom, (q.yOffset + y)/q.zoom) - 0.5;
-            let t = 3;
+            let t = 1;
             if (second) {
-                t *= -1;
+                t *= -5;
             }
-            return s.max(q.minCircleD, t*v*q.maxCircleDMult*q.spacing);
+            const v = 2* (s.noise(t*(q.offset.x + x)/q.zoom, (q.offset.y + y)/q.zoom) - 0.5);
+            return s.max(q.minCircleDMult*q.spacing, v*q.maxCircleDMult*q.spacing);
         }
-
-        s.background(q.background);
+        q.spacing = s.width/(q.numPts + 1);
         s.noFill();
-        s.translate(s.width/2 - (q.numPts * q.spacing / 2) , s.height/2 - (q.numPts/11*14 * q.spacing / 2));
+        s.translate(s.width/2 - (q.numPts * q.spacing / 2) , s.height/2 - (q.numPts/s.width*s.height * q.spacing / 2));
 
         s.stroke(q.color1);
-        pointsOnGrid(q.numPts, q.numPts/11*14, (x: number, y: number) => {
+        pointsOnGrid(q.numPts, q.numPts/s.width*s.height, (x: number, y: number) => {
             const pt = pointCoords(q.spacing, x, y);
             s.circle(pt.x, pt.y, determineCircleD(x, y, false));
         });
 
         s.translate(q.spacing/2, q.spacing/2);
         s.stroke(q.color2);
-        pointsOnGrid(q.numPts, q.numPts/11*14,(x: number, y: number) => {
+        pointsOnGrid(q.numPts, q.numPts/s.width*s.height,(x: number, y: number) => {
             const pt = pointCoords(q.spacing, x, y);
             s.circle(pt.x, pt.y,  determineCircleD(x, y, true));
         });
