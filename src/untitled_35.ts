@@ -6,9 +6,19 @@ import {defaultPaneHelpers, initPaneAtLeft} from "./helpers/tweakpane";
 import {setBackground} from "./helpers/color";
 import {initDrawingSystem} from "./helpers/drawing";
 import {pointCoords, pointsOnGrid} from "./helpers/grid";
+import {point} from "./helpers/point";
+import {FolderApi} from "@tweakpane/core";
 
 // Description: Untitled_17 (circles) revisited.
 // Date: 2/25/24 02:31:14Z
+
+interface layer {
+    color: string,
+    offset: point,
+    folder: FolderApi | null,
+}
+
+const layers: layer[] = [];
 
 const q = {
     numPts: 75,
@@ -19,8 +29,13 @@ const q = {
     minCircleDMult: 0.1,
     maxCircleDMult: 0.95,
     offset: {x: 0, y: 0},
+    numLayers: 1,
 };
 const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "Circles"});
+pane.addBinding(q, "numLayers", {step: 1, min: 1, max: 3}).on("change", () => {
+
+
+});
 pane.addBinding(q, "zoom");
 pane.addBinding(q, "numPts");
 pane.addBinding(q, "minCircleDMult");
@@ -55,12 +70,15 @@ const sketch = (s: p5SVG) => {
             img.resizeCanvas(s.width, s.height, true);
             drawFunc();
         }
-        function determineCircleD(x: number, y: number, second: boolean): number {
+        function determineCircleD(xIn: number, yIn: number, second: boolean): number {
             let t = 1;
             if (second) {
                 t *= -5;
             }
-            const v = 2* (s.noise(t*(q.offset.x + x)/q.zoom, (q.offset.y + y)/q.zoom) - 0.5);
+            // const v = 2* (s.noise(t*(q.offset.x + x)/q.zoom, (q.offset.y + y)/q.zoom) - 0.5);
+            const x = (q.offset.x + xIn)/q.zoom;
+            const y = (q.offset.y + yIn)/q.zoom;
+            const v = s.sin(2.31*x+0.11*t+5.95+2.57*s.sin(1.73*y-0.65*t+1.87)) + s.sin(3.09*y-0.28*t+4.15+2.31*s.sin(2.53*x+0.66*t+4.45))+s.sin(3.06*x-0.18*t+5.16+2.28*s.sin(2.27*y+0.71*t+3.97))+s.sin(5.40*y-0.13*t+4.74+2.83*s.sin(3.71*x+0.96*t+4.42))/2.;
             return s.max(q.minCircleDMult*q.spacing, v*q.maxCircleDMult*q.spacing);
         }
         q.spacing = s.width/(q.numPts + 1);
@@ -73,12 +91,12 @@ const sketch = (s: p5SVG) => {
             s.circle(pt.x, pt.y, determineCircleD(x, y, false));
         });
 
-        s.translate(q.spacing/2, q.spacing/2);
-        s.stroke(q.color2);
-        pointsOnGrid(q.numPts, q.numPts/s.width*s.height,(x: number, y: number) => {
-            const pt = pointCoords(q.spacing, x, y);
-            s.circle(pt.x, pt.y,  determineCircleD(x, y, true));
-        });
+        // s.translate(q.spacing/2, q.spacing/2);
+        // s.stroke(q.color2);
+        // pointsOnGrid(q.numPts, q.numPts/s.width*s.height,(x: number, y: number) => {
+        //     const pt = pointCoords(q.spacing, x, y);
+        //     s.circle(pt.x, pt.y,  determineCircleD(x, y, true));
+        // });
 
         updateFunc();
     };
