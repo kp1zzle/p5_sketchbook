@@ -15,6 +15,7 @@ import {FolderApi} from "@tweakpane/core";
 interface layer {
     color: string,
     offset: point,
+    noiseOffset: point,
     folder: FolderApi | null,
 }
 
@@ -24,8 +25,6 @@ const q = {
     numPts: 75,
     spacing: 8,
     zoom: 25,
-    color1: "#0773ff",
-    color2: "#e236ff",
     minCircleDMult: 0.1,
     maxCircleDMult: 0.95,
     offset: {x: 0, y: 0},
@@ -33,7 +32,24 @@ const q = {
 };
 const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "Circles"});
 pane.addBinding(q, "numLayers", {step: 1, min: 1, max: 3}).on("change", () => {
-
+    const add = q.numLayers > layers.length;
+    for (let i = 0; i < Math.abs(q.numLayers - layers.length); i++) {
+        if (add) {
+            const f = pane.addFolder({title: "layer " + (layers.length + 1).toString()})
+            layers.push({
+                color: "0773ff",
+                offset: {x: 0, y: 0},
+                noiseOffset: {x: 0, y: 0},
+                folder: f,
+            })
+            f.addBinding(layers[layers.length - 1], "color")
+            f.addBinding(layers[layers.length - 1], "offset")
+            f.addBinding(layers[layers.length - 1], "noiseOffset")
+        } else {
+            const l = layers.pop();
+            l.folder.dispose();
+        }
+    }
 
 });
 pane.addBinding(q, "zoom");
@@ -41,8 +57,6 @@ pane.addBinding(q, "numPts");
 pane.addBinding(q, "minCircleDMult");
 pane.addBinding(q, "maxCircleDMult", {step: 0.05});
 pane.addBinding(q, "offset");
-pane.addBinding(q, "color1", {expanded: true, picker: "inline",});
-pane.addBinding(q, "color2", {expanded: true, picker: "inline",});
 
 let img: P5.Graphics = null;
 let updateFunc: () => void;
@@ -85,11 +99,14 @@ const sketch = (s: p5SVG) => {
         s.noFill();
         s.translate(s.width/2 - (q.numPts * q.spacing / 2) , s.height/2 - (q.numPts/s.width*s.height * q.spacing / 2));
 
-        s.stroke(q.color1);
-        pointsOnGrid(q.numPts, q.numPts/s.width*s.height, (x: number, y: number) => {
-            const pt = pointCoords(q.spacing, x, y);
-            s.circle(pt.x, pt.y, determineCircleD(x, y, false));
-        });
+        for (const layer of layers) {
+            s.stroke(layer.color);
+            pointsOnGrid(q.numPts, q.numPts/s.width*s.height, (x: number, y: number) => {
+                const pt = pointCoords(q.spacing, x, y);
+                s.circle(layer.offset.x + pt.x, layer.offset.y + pt.y, determineCircleD(layer.noiseOffset.x + x, layer.noiseOffset.y + y, false));
+            });
+    
+        }
 
         // s.translate(q.spacing/2, q.spacing/2);
         // s.stroke(q.color2);
