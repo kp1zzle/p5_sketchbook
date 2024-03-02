@@ -28,23 +28,23 @@ const q = {
     minCircleDMult: 0.1,
     maxCircleDMult: 0.95,
     offset: {x: 0, y: 0},
-    numLayers: 1,
+    numLayers: 0,
 };
 const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "Circles"});
 pane.addBinding(q, "numLayers", {step: 1, min: 1, max: 3}).on("change", () => {
     const add = q.numLayers > layers.length;
     for (let i = 0; i < Math.abs(q.numLayers - layers.length); i++) {
         if (add) {
-            const f = pane.addFolder({title: "layer " + (layers.length + 1).toString()})
+            const f = pane.addFolder({title: "layer " + (layers.length + 1).toString()});
             layers.push({
-                color: "0773ff",
+                color: "#0773ff",
                 offset: {x: 0, y: 0},
                 noiseOffset: {x: 0, y: 0},
                 folder: f,
-            })
-            f.addBinding(layers[layers.length - 1], "color")
-            f.addBinding(layers[layers.length - 1], "offset")
-            f.addBinding(layers[layers.length - 1], "noiseOffset")
+            });
+            f.addBinding(layers[layers.length - 1], "color");
+            f.addBinding(layers[layers.length - 1], "offset");
+            f.addBinding(layers[layers.length - 1], "noiseOffset");
         } else {
             const l = layers.pop();
             l.folder.dispose();
