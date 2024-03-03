@@ -12,15 +12,35 @@ import {FolderApi} from "@tweakpane/core";
 // Description: Untitled_17 (circles) revisited.
 // Date: 2/25/24 02:31:14Z
 
+const noiseFuncs = {
+    "wobbly 1": (s: p5SVG, x: number, y: number) => {
+        const t = 1;
+        return s.sin(2.31*x+0.11*t+5.95+2.57*s.sin(1.73*y-0.65*t+1.87)) + s.sin(3.09*y-0.28*t+4.15+2.31*s.sin(2.53*x+0.66*t+4.45))+s.sin(3.06*x-0.18*t+5.16+2.28*s.sin(2.27*y+0.71*t+3.97))+s.sin(5.40*y-0.13*t+4.74+2.83*s.sin(3.71*x+0.96*t+4.42))/2.;
+    },
+    "perlin": (s: p5SVG, x: number, y: number) => {
+        return 2 * (s.noise(x, y) - 0.5);
+    },
+};
+const noiseFuncOptions = {};
+for (const key in noiseFuncs) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    noiseFuncOptions[key] = key;
+}
+
 interface layer {
     color: string,
     offset: point,
     noiseOffset: point,
     folder: FolderApi | null,
+    noiseFunc: keyof typeof noiseFuncs,
+    zoom: number
 }
 
 const layers: layer[] = [];
+// eslint-disable-next-line prefer-const
 let layersFolder: FolderApi;
+
 
 const q = {
     numPts: 75,
@@ -42,10 +62,16 @@ pane.addBinding(q, "numLayers", {step: 1, min: 1, max: 3}).on("change", () => {
                 offset: {x: 0, y: 0},
                 noiseOffset: {x: 0, y: 0},
                 folder: f,
+                noiseFunc: "wobbly 1",
+                zoom: 1,
             });
             f.addBinding(layers[layers.length - 1], "color");
             f.addBinding(layers[layers.length - 1], "offset");
             f.addBinding(layers[layers.length - 1], "noiseOffset");
+            f.addBinding(layers[layers.length - 1], "zoom");
+            f.addBinding(layers[layers.length - 1], "noiseFunc", {
+                options: noiseFuncOptions,
+            });
         } else {
             const l = layers.pop();
             l.folder.dispose();
@@ -86,17 +112,6 @@ const sketch = (s: p5SVG) => {
             img.resizeCanvas(s.width, s.height, true);
             drawFunc();
         }
-        function determineCircleD(xIn: number, yIn: number, second: boolean): number {
-            let t = 1;
-            if (second) {
-                t *= -5;
-            }
-            // const v = 2* (s.noise(t*(q.offset.x + x)/q.zoom, (q.offset.y + y)/q.zoom) - 0.5);
-            const x = (q.offset.x + xIn)/q.zoom;
-            const y = (q.offset.y + yIn)/q.zoom;
-            const v = s.sin(2.31*x+0.11*t+5.95+2.57*s.sin(1.73*y-0.65*t+1.87)) + s.sin(3.09*y-0.28*t+4.15+2.31*s.sin(2.53*x+0.66*t+4.45))+s.sin(3.06*x-0.18*t+5.16+2.28*s.sin(2.27*y+0.71*t+3.97))+s.sin(5.40*y-0.13*t+4.74+2.83*s.sin(3.71*x+0.96*t+4.42))/2.;
-            return s.max(q.minCircleDMult*q.spacing, v*q.maxCircleDMult*q.spacing);
-        }
         q.spacing = s.width/(q.numPts + 1);
         s.noFill();
         s.translate(s.width/2 - (q.numPts * q.spacing / 2) , s.height/2 - (q.numPts/s.width*s.height * q.spacing / 2));
@@ -105,9 +120,12 @@ const sketch = (s: p5SVG) => {
             s.stroke(layer.color);
             pointsOnGrid(q.numPts, q.numPts/s.width*s.height, (x: number, y: number) => {
                 const pt = pointCoords(q.spacing, x, y);
-                s.circle(layer.offset.x + pt.x, layer.offset.y + pt.y, determineCircleD(layer.noiseOffset.x + x, layer.noiseOffset.y + y, false));
+                const xComputed = ((q.offset.x + layer.noiseOffset.x + x)/layer.zoom)/q.zoom;
+                const yComputed = ((q.offset.y + layer.noiseOffset.y + y)/layer.zoom)/q.zoom;
+                const size = s.max(q.minCircleDMult*q.spacing, noiseFuncs[layer.noiseFunc](s, xComputed, yComputed)*q.maxCircleDMult*q.spacing);
+                s.circle(layer.offset.x + pt.x, layer.offset.y + pt.y, size);
             });
-    
+
         }
 
         // s.translate(q.spacing/2, q.spacing/2);

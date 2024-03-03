@@ -8,10 +8,10 @@ export function defaultKeys(s: p5SVG, sketch: (s: p5SVG) => void) {
     } else if (s.key === "S") {
         exportSVG(s, sketch);
     } else if (s.key === "1") {
-        s.resizeCanvas(s.windowWidth, s.windowHeight);
+        // s.resizeCanvas(s.windowWidth, s.windowHeight);
     } else if (s.key === "2") {
-        setAspectRatio(s, 11, 14);
+        // setAspectRatio(s, 11, 14);
     } else if (s.key === "3") {
-        setAspectRatio(s, 9, 16);
+        // setAspectRatio(s, 9, 16);
     }
 }
