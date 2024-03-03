@@ -20,6 +20,7 @@ interface layer {
 }
 
 const layers: layer[] = [];
+let layersFolder: FolderApi;
 
 const q = {
     numPts: 75,
@@ -35,7 +36,7 @@ pane.addBinding(q, "numLayers", {step: 1, min: 1, max: 3}).on("change", () => {
     const add = q.numLayers > layers.length;
     for (let i = 0; i < Math.abs(q.numLayers - layers.length); i++) {
         if (add) {
-            const f = pane.addFolder({title: "layer " + (layers.length + 1).toString()});
+            const f = layersFolder.addFolder({title: "layer " + (layers.length + 1).toString()});
             layers.push({
                 color: "#0773ff",
                 offset: {x: 0, y: 0},
@@ -57,6 +58,7 @@ pane.addBinding(q, "numPts");
 pane.addBinding(q, "minCircleDMult");
 pane.addBinding(q, "maxCircleDMult", {step: 0.05});
 pane.addBinding(q, "offset");
+layersFolder = pane.addFolder({title: "layers"});
 
 let img: P5.Graphics = null;
 let updateFunc: () => void;
