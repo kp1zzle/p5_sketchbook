@@ -20,6 +20,24 @@ const noiseFuncs = {
     "perlin": (s: p5SVG, x: number, y: number) => {
         return 2 * (s.noise(x, y) - 0.5);
     },
+    "linear x": (s: p5SVG, x: number, y: number) => {
+        return x;
+    },
+    "linear y": (s: p5SVG, x: number, y: number) => {
+        return y;
+    },
+    "linear xy": (s: p5SVG, x: number, y: number) => {
+        return x+y;
+    },
+    "quadratic x": (s: p5SVG, x: number, y: number) => {
+        return x*x;
+    },
+    "quadratic y": (s: p5SVG, x: number, y: number) => {
+        return y*y;
+    },
+    "exponential x": (s: p5SVG, x: number, y: number) => {
+        return Math.pow(2, x);
+    }
 };
 const noiseFuncOptions = {};
 for (const key in noiseFuncs) {
