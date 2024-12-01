@@ -17,7 +17,14 @@ const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "Circles"});
 pane.addBinding(params, "layers");
 pane.addBinding(params, "radius");
 
-const hex = new Set<string>();
+class lightEffect {
+    intensity: number;
+    color: string;
+    direction: number;
+    pattern: string;
+}
+
+const hex = new Map<string, lightEffect[]>();
 
 init(P5);
 const sketch = (s: p5SVG) => {
@@ -30,6 +37,7 @@ const sketch = (s: p5SVG) => {
     };
 
     s.draw = () => {
+        advanceHexState();
         s.background(255);
         s.translate(s.width/2, s.height/2);
         drawHexGrid(s, params.layers);
@@ -42,7 +50,7 @@ const sketch = (s: p5SVG) => {
         if (hex.has(key)) {
             hex.delete(key);
         } else {
-            hex.add(key);
+            hex.set(key, []);
         }
         console.log(key);
     };
@@ -60,7 +68,9 @@ const sketch = (s: p5SVG) => {
 
 };
 
+function advanceHexState() {
 
+}
 
 function drawHexGrid(s: p5SVG, layers: number) {
     for (let q = -layers; q <= layers; q++) {
@@ -86,19 +96,20 @@ function drawHexagon(s: p5SVG, q: number, r: number) {
     const { x, y } = axialToPixel(q, r);
     const key = q.toString() + " "  + r.toString();
 
-    s.beginShape();
-    for (let i = 0; i < 6; i++) {
-        const angle = s.TWO_PI / 6 * i;
-        const xOffset = x + params.radius * s.cos(angle);
-        const yOffset = y + params.radius * s.sin(angle);
-        s.vertex(xOffset, yOffset);
-    }
-    s.endShape(s.CLOSE);
+    // s.beginShape();
+    // for (let i = 0; i < 6; i++) {
+    //     const angle = s.TWO_PI / 6 * i;
+    //     const xOffset = x + params.radius * s.cos(angle);
+    //     const yOffset = y + params.radius * s.sin(angle);
+    //     s.vertex(xOffset, yOffset);
+    // }
+    // s.endShape(s.CLOSE);
 
     if (hex.has(key)) {
         s.push();
         s.strokeWeight(5);
-        const lineColors = ["#eb4034", "#addb23", "#23dbb6", "#4523db", "#b023db", "#ff7ddc"];
+        s.stroke(230);
+        // const lineColors = ["#eb4034", "#addb23", "#23dbb6", "#4523db", "#b023db", "#ff7ddc"];
         let prevVertex = null;
 
         for (let i = 0; i < 7; i++) {
@@ -114,7 +125,7 @@ function drawHexagon(s: p5SVG, q: number, r: number) {
                 // 5 - N
                 // 6 - NE
 
-                s.stroke(lineColors[i-1]);
+                // s.stroke(lineColors[i-1]);
                 s.line(
                     prevVertex.xOffset,
                     prevVertex.yOffset,
