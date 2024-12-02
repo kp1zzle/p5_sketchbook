@@ -8,6 +8,12 @@ import {setBackground} from "./helpers/color";
 // Description: Patterns for re(mediation) studio project.
 // Date: 12/1/24 02:31:14Z
 
+//Constants
+const PERIMETER = "perimeter";
+const RANDOM = "random";
+const NEXTADJ = "nextadj";
+const BRANCHING = "branching";
+
 
 const params = {
     layers: 5,
@@ -22,11 +28,26 @@ interface LightEffect {
     // color: string;
     // direction: number;
     pattern: string;
+
 }
 
 const activeHexagons = new Set<string>;
 let state = new Map<string, LightEffect[]>();
-state.set("0 0 0", [{pattern: "rotate"}]);
+// state.set("0 0 0", [{pattern: BRANCHING}]);
+// state.set("-1 0 2", [{pattern: PERIMETER}]);
+state.set("0 0 0", [{pattern: RANDOM}]);
+// state.set("0 0 0", [{pattern: RANDOM}]);
+// state.set("0 0 0", [{pattern: RANDOM}]);
+// state.set("0 0 0", [{pattern: RANDOM}]);
+// state.set("0 0 0", [{pattern: RANDOM}]);
+// state.set("0 0 1", [{pattern: RANDOM}]);
+// state.set("0 0 2", [{pattern: RANDOM}]);
+// state.set("0 0 4", [{pattern: RANDOM}]);
+// state.set("0 0 5", [{pattern: RANDOM}]);
+// state.set("0 2 0", [{pattern: RANDOM}]);
+// state.set("0 -2 3", [{pattern: PERIMETER}]);
+// state.set("2 2 2", [{pattern: PERIMETER}]);
+// state.set("3 4 2", [{pattern: PERIMETER}]);
 activeHexagons.add("0 0");
 
 init(P5);
@@ -101,21 +122,137 @@ function advanceHexState() {
 
         for (const effect of effects) {
             let s;
-            if (effect.pattern === "rotate") {
-                s = rotateEffect(q, r, edge, effect);
+            if (effect.pattern === PERIMETER) {
+                s = perimeterEffect(q, r, edge, effect);
+            } else if (effect.pattern === RANDOM) {
+                s = randomEffect();
+            } else if (effect.pattern === NEXTADJ) {
+                s = nextAdjEffect(q, r, edge, effect);
+            } else if (effect.pattern === BRANCHING) {
+                s = branchingEffect(q, r, edge, effect);
             }
-            const {newQ, newR, newEdge} = s;
-            mapAppend(newState, encodeKey(newQ, newR, newEdge), effect);
+            for (const entry of s) {
+                mapAppend(newState, encodeKey(entry.newQ, entry.newR, entry.newEdge), effect);
+            }
         }
     });
     state = newState;
 }
 
-function rotateEffect(q: number, r: number, edge: number, effect: LightEffect) {
+function randomEffect() {
+    const activeHexArray = Array.from(activeHexagons);
+    const randomElement = activeHexArray[Math.floor(Math.random() * activeHexArray.length)];
+    const v = randomElement.split(" ");
+    const newQ = parseInt(v[0]);
+    const newR = parseInt(v[1]);
+    const newEdge = Math.floor(Math.random() * 5);
+
+    return [{newQ, newR, newEdge}];
+}
+
+function perimeterEffect(q: number, r: number, edge: number, effect: LightEffect) {
+
+    const nextEdgeInHexagon = (edge + 1) % 6;
+
+    let newQ = q;
+    let newR = r;
+    let newEdge = nextEdgeInHexagon;
+    const adj = edgeIsAdjacentToLiveHexagon(q, r, nextEdgeInHexagon);
+    if (adj !== undefined) {
+        newQ = adj.newQ;
+        newR = adj.newR;
+        newEdge = (adj.newEdge + 1) % 6;
+    }
+
+    return [{newQ, newR, newEdge}];
+}
+
+function nextAdjEffect(q: number, r: number, edge: number, effect: LightEffect) {
+
+    const nextEdgeInHexagon1 = (edge + 1) % 6;
+    const nextEdgeInHexagon2 = (edge - 1) % 6;
+
     const newQ = q;
     const newR = r;
-    const newEdge = (edge + 1) % 6;
-    return {newQ, newR, newEdge};
+    const newEdge = nextEdgeInHexagon1;
+    const adj1 = edgeIsAdjacentToLiveHexagon(q, r, nextEdgeInHexagon1);
+    const adj2 = edgeIsAdjacentToLiveHexagon(q, r, nextEdgeInHexagon2);
+    if (adj1 !== undefined) {
+        return [adj1];
+    } else if (adj2 !== undefined) {
+        return [adj2];
+    }
+
+    return [{newQ, newR, newEdge}];
+}
+
+function branchingEffect(q: number, r: number, edge: number, effect: LightEffect) {
+
+    const nextEdgeInHexagonClockwise = (edge + 1) % 6;
+    const nextEdgeInHexagonCounterClockwise = (edge - 1) % 6;
+
+    const out = [
+        {
+            newQ: q,
+            newR: r,
+            newEdge: nextEdgeInHexagonClockwise
+        },{
+            newQ: q,
+            newR: r,
+            newEdge: nextEdgeInHexagonCounterClockwise
+        },];
+    const adj = edgeIsAdjacentToLiveHexagon(q, r, edge);
+    if (adj !== undefined) {
+        out.push(adj);
+    }
+
+    out.map((v) => {
+        if (!state.has(encodeKey(v.newQ, v.newR, v.newEdge))) {
+            return v;
+        }
+    });
+
+    out.push({
+        newQ: q,
+        newR: r,
+        newEdge: edge
+    });
+    return out;
+}
+
+// returns the coord of the adj edge if it exists, else undefined
+function edgeIsAdjacentToLiveHexagon(q: number, r: number, edge: number) {
+    let newQ = q;
+    let newR = r;
+    const newEdge = (edge + 3) % 6;
+
+    switch (edge) {
+    case 0:
+        newQ += 1;
+        break;
+    case 1:
+        newR += 1;
+        break;
+    case 2:
+        newQ -= 1;
+        newR += 1;
+        break;
+    case 3:
+        newQ -= 1;
+        break;
+    case 4:
+        newR -= 1;
+        break;
+    case 5:
+        newQ += 1;
+        newR -= 1;
+        break;
+    }
+
+    if (activeHexagons.has(encodeKey(newQ, newR))) {
+        return {newQ, newR, newEdge};
+    }
+    return undefined;
 }
 
 function drawHexGrid(s: p5SVG, layers: number) {
@@ -174,7 +311,8 @@ function drawHexagon(s: p5SVG, q: number, r: number) {
                 if (state.has(encodeKey(q, r, i - 1))) {
                     s.stroke(100);
                 } else {
-                    s.stroke(230);
+                    // s.stroke(230);
+                    s.stroke(255);
                 }
 
                 //
