@@ -17,16 +17,17 @@ const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "Circles"});
 pane.addBinding(params, "layers");
 pane.addBinding(params, "radius");
 
-interface lightEffect {
-    intensity: number;
-    color: string;
-    direction: number;
+interface LightEffect {
+    // intensity: number;
+    // color: string;
+    // direction: number;
     pattern: string;
 }
 
 const activeHexagons = new Set<string>;
-const state = new Map<string, lightEffect[]>();
-state.set("0 0 0", []);
+let state = new Map<string, LightEffect[]>();
+state.set("0 0 0", [{pattern: "rotate"}]);
+activeHexagons.add("0 0");
 
 init(P5);
 const sketch = (s: p5SVG) => {
@@ -35,7 +36,7 @@ const sketch = (s: p5SVG) => {
         setBackground(s.color("#999999"));
         setAspectRatioStr(s, "1x1", maxWidth(800, uiWidth), maxHeight());
         defaultPaneHelpers(pane, s, sketch, maxWidth(800, uiWidth));
-        s.frameRate(20);
+        s.frameRate(10);
     };
 
     s.draw = () => {
@@ -86,16 +87,35 @@ function encodeKey(q: number, r: number, edge?: number) {
     return key;
 }
 
+function mapAppend(map: Map<string, LightEffect[]>, key: string, value: LightEffect) {
+    if (!map.has(key)) {
+        map.set(key, []);
+    }
+    map.get(key).push(value);
+}
+
 function advanceHexState() {
-    // const newHex = new Map<string, lightEffect[]>();
-    // hex.forEach((effects, key, ) => {
-    //     const {q, r} = decodeKey(key);
-    //     for (const effect of effects) {
-    //
-    //     }
-    // });
-    //
-    // hex = newHex;
+    const newState = new Map<string, LightEffect[]>();
+    state.forEach((effects, key) => {
+        const {q, r, edge} = decodeStateKey(key);
+
+        for (const effect of effects) {
+            let s;
+            if (effect.pattern === "rotate") {
+                s = rotateEffect(q, r, edge, effect);
+            }
+            const {newQ, newR, newEdge} = s;
+            mapAppend(newState, encodeKey(newQ, newR, newEdge), effect);
+        }
+    });
+    state = newState;
+}
+
+function rotateEffect(q: number, r: number, edge: number, effect: LightEffect) {
+    const newQ = q;
+    const newR = r;
+    const newEdge = (edge + 1) % 6;
+    return {newQ, newR, newEdge};
 }
 
 function drawHexGrid(s: p5SVG, layers: number) {
