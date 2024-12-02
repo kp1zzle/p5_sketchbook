@@ -17,14 +17,16 @@ const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "Circles"});
 pane.addBinding(params, "layers");
 pane.addBinding(params, "radius");
 
-class lightEffect {
+interface lightEffect {
     intensity: number;
     color: string;
     direction: number;
     pattern: string;
 }
 
-const hex = new Map<string, lightEffect[]>();
+const activeHexagons = new Set<string>;
+const state = new Map<string, lightEffect[]>();
+state.set("0 0 0", []);
 
 init(P5);
 const sketch = (s: p5SVG) => {
@@ -47,10 +49,10 @@ const sketch = (s: p5SVG) => {
     s.mousePressed = () => {
         const {q, r} = pixelToAxial(s.mouseX - s.width/2, s.mouseY - s.height/2);
         const key = q.toString() + " "  + r.toString();
-        if (hex.has(key)) {
-            hex.delete(key);
+        if (activeHexagons.has(key)) {
+            activeHexagons.delete(key);
         } else {
-            hex.set(key, []);
+            activeHexagons.add(key);
         }
         console.log(key);
     };
@@ -68,8 +70,32 @@ const sketch = (s: p5SVG) => {
 
 };
 
-function advanceHexState() {
+function decodeStateKey(key: string) {
+    const v = key.split(" ");
+    const q = parseInt(v[0]);
+    const r = parseInt(v[1]);
+    const edge = parseInt(v[2]);
+    return {q, r, edge};
+}
 
+function encodeKey(q: number, r: number, edge?: number) {
+    let key = q.toString() + " "  + r.toString();
+    if (edge !== undefined) {
+        key += " " + edge.toString();
+    }
+    return key;
+}
+
+function advanceHexState() {
+    // const newHex = new Map<string, lightEffect[]>();
+    // hex.forEach((effects, key, ) => {
+    //     const {q, r} = decodeKey(key);
+    //     for (const effect of effects) {
+    //
+    //     }
+    // });
+    //
+    // hex = newHex;
 }
 
 function drawHexGrid(s: p5SVG, layers: number) {
@@ -94,7 +120,7 @@ function pixelToAxial(x: number, y: number) {
 
 function drawHexagon(s: p5SVG, q: number, r: number) {
     const { x, y } = axialToPixel(q, r);
-    const key = q.toString() + " "  + r.toString();
+    const key = encodeKey(q, r);
 
     // s.beginShape();
     // for (let i = 0; i < 6; i++) {
@@ -105,13 +131,13 @@ function drawHexagon(s: p5SVG, q: number, r: number) {
     // }
     // s.endShape(s.CLOSE);
 
-    if (hex.has(key)) {
+    if (activeHexagons.has(key)) {
         s.push();
         s.strokeWeight(5);
         s.stroke(230);
         // const lineColors = ["#eb4034", "#addb23", "#23dbb6", "#4523db", "#b023db", "#ff7ddc"];
-        let prevVertex = null;
 
+        let prevVertex = null;
         for (let i = 0; i < 7; i++) {
             const angle = s.TWO_PI / 6 * i;
             const xOffset = x + (params.radius - 5) * s.cos(angle);
@@ -125,7 +151,13 @@ function drawHexagon(s: p5SVG, q: number, r: number) {
                 // 5 - N
                 // 6 - NE
 
-                // s.stroke(lineColors[i-1]);
+                if (state.has(encodeKey(q, r, i - 1))) {
+                    s.stroke(100);
+                } else {
+                    s.stroke(230);
+                }
+
+                //
                 s.line(
                     prevVertex.xOffset,
                     prevVertex.yOffset,
