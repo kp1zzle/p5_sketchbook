@@ -21,10 +21,14 @@ const params = {
     underpopulation: 2,
     overpopulation: 3,
     reproduction: 3,
+    paused: true,
+    clickToActivateHexagons: true,
 };
 const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "Circles"});
 pane.addBinding(params, "layers");
 pane.addBinding(params, "radius");
+pane.addBinding(params, "paused");
+pane.addBinding(params, "clickToActivateHexagons");
 pane.addBinding(params, "underpopulation", {min: 0, max: 10, step: 1});
 pane.addBinding(params, "overpopulation", {min: 0, max: 10, step: 1});
 pane.addBinding(params, "reproduction", {min: 0, max: 10, step: 1});
@@ -81,7 +85,9 @@ const sketch = (s: p5SVG) => {
     };
 
     s.draw = () => {
-        advanceHexState();
+        if (!params.paused) {
+            advanceHexState();
+        }
         s.background(255);
         s.translate(s.width/2, s.height/2);
         drawHexGrid(s, params.layers);
@@ -89,14 +95,27 @@ const sketch = (s: p5SVG) => {
     };
 
     s.mousePressed = () => {
-        const {q, r} = pixelToAxial(s.mouseX - s.width/2, s.mouseY - s.height/2);
-        const key = q.toString() + " "  + r.toString();
-        if (activeHexagons.has(key)) {
-            activeHexagons.delete(key);
+        const {q, r, nearestEdge} = pixelToAxial(s.mouseX - s.width/2, s.mouseY - s.height/2);
+        const activeHexagonKey = q.toString() + " "  + r.toString();
+
+        if (params.clickToActivateHexagons) {
+            if (activeHexagons.has(activeHexagonKey)) {
+                activeHexagons.delete(activeHexagonKey);
+            } else {
+                activeHexagons.add(activeHexagonKey);
+            }
         } else {
-            activeHexagons.add(key);
+            if (activeHexagons.has(activeHexagonKey)) {
+                const key = encodeKey(q, r, nearestEdge);
+                if (CAState.has(key)) {
+                    CAState.delete(key);
+                } else {
+                    CAState.add(key);
+                }
+            }
         }
-        console.log(key);
+        console.log(nearestEdge);
+
     };
 
     s.mouseReleased = () => {
@@ -341,7 +360,37 @@ function axialToPixel(q: number, r: number) {
 function pixelToAxial(x: number, y: number) {
     const q = Math.round((2/3 * x) / params.radius);
     const r = Math.round((-1/3 * x + Math.sqrt(3)/3 * y) / params.radius);
-    return { q, r };
+    const center = axialToPixel(q, r);
+    const vertices = [];
+    for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI / 3) * i;
+        vertices.push({
+            x: center.x + (params.radius * Math.cos(angle)),
+            y: center.y + (params.radius * Math.sin(angle))
+        });
+    }
+
+    let nearestEdge = 0;
+    let minDist = Infinity;
+    for (let i = 0; i < 6; i++) {
+        const v1 = vertices[i];
+        const v2 = vertices[(i + 1) % 6];
+        const dist = pointToSegmentDistance(x, y, v1.x, v1.y, v2.x, v2.y);
+        if (dist < minDist) {
+            minDist = dist;
+            nearestEdge = i;
+        }
+    }
+
+    return { q, r, nearestEdge };
+}
+
+function pointToSegmentDistance(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
+    const l2 = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+    if (l2 === 0) return Math.hypot(px - x1, py - y1);
+    let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (x1 + t * (x2 - x1)), py - (y1 + t * (y2 - y1)));
 }
 
 function drawHexagon(s: p5SVG, q: number, r: number) {
