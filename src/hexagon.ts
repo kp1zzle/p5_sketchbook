@@ -23,12 +23,14 @@ const params = {
     reproduction: 3,
     paused: true,
     clickToActivateHexagons: true,
+    speed: 15,
 };
 const {pane, uiWidth} = initPaneAtLeft(1.1, {title: "Circles"});
 pane.addBinding(params, "layers");
 pane.addBinding(params, "radius");
 pane.addBinding(params, "paused");
 pane.addBinding(params, "clickToActivateHexagons");
+pane.addBinding(params, "speed", {min: 0, max: 60, step: 1});
 pane.addBinding(params, "underpopulation", {min: 0, max: 10, step: 1});
 pane.addBinding(params, "overpopulation", {min: 0, max: 10, step: 1});
 pane.addBinding(params, "reproduction", {min: 0, max: 10, step: 1});
@@ -44,6 +46,7 @@ interface LightEffect {
 
 const activeHexagons = new Set<string>;
 let CAState = new Set<string>;
+let oldCAState = new Set<string>;
 CAState.add("0 0 0");
 CAState.add("0 0 1");
 CAState.add("0 0 2");
@@ -73,6 +76,7 @@ activeHexagons.add("0 1");
 activeHexagons.add("0 -1");
 activeHexagons.add("1 1");
 activeHexagons.add("-1 -1");
+let framesSinceLastUpdate = 0;
 
 init(P5);
 const sketch = (s: p5SVG) => {
@@ -81,17 +85,20 @@ const sketch = (s: p5SVG) => {
         setBackground(s.color("#999999"));
         setAspectRatioStr(s, "1x1", maxWidth(800, uiWidth), maxHeight());
         defaultPaneHelpers(pane, s, sketch, maxWidth(800, uiWidth));
-        s.frameRate(5);
     };
 
     s.draw = () => {
+        s.frameRate(params.speed);
         if (!params.paused) {
-            advanceHexState();
+            if (framesSinceLastUpdate >= 10) {
+                advanceHexState();
+                framesSinceLastUpdate = 0;
+            }
         }
         s.background(255);
         s.translate(s.width/2, s.height/2);
         drawHexGrid(s, params.layers);
-
+        framesSinceLastUpdate += 1;
     };
 
     s.mousePressed = () => {
@@ -207,6 +214,7 @@ function advanceHexState() {
         }
     });
 
+    oldCAState = CAState;
     CAState = newCAState;
 }
 
@@ -426,14 +434,26 @@ function drawHexagon(s: p5SVG, q: number, r: number) {
                 // 5 - N
                 // 6 - NE
 
-                if (state.has(encodeKey(q, r, i - 1)) || CAState.has(encodeKey(q, r, i - 1))) {
-                    s.stroke(100);
-                } else {
-                    s.stroke(230);
-                    // s.stroke(255);
+                const edgeKey = encodeKey(q, r, i - 1);
+                const lightStroke = 230;
+                const darkStroke = 100;
+                let strokeColor = lightStroke;
+                if (CAState.has(edgeKey) || state.has(edgeKey)) {
+                    strokeColor = darkStroke;
                 }
 
-                //
+                if (CAState.has(edgeKey) && !oldCAState.has(edgeKey)) {
+                    // Fading in
+                    strokeColor = Math.max(darkStroke, lightStroke - ((framesSinceLastUpdate / 5) * (lightStroke - darkStroke)));
+
+                } else if (!CAState.has(edgeKey) && oldCAState.has(edgeKey)) {
+                    // Fading out
+                    strokeColor = Math.min(lightStroke, darkStroke + ((framesSinceLastUpdate / 5) * (lightStroke - darkStroke)));
+                }
+
+
+
+                s.stroke(strokeColor);
                 s.line(
                     prevVertex.xOffset,
                     prevVertex.yOffset,
